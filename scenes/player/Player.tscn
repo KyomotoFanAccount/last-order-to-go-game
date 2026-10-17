@@ -5,20 +5,21 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xrivr"]
 radius = 0.35
-height = 2.2
+height = 2.362349
 
 [node name="Player" type="CharacterBody3D" unique_id=19288516]
 script = ExtResource("1_gfjak")
 
 [node name="VisualPivot" type="Node3D" parent="." unique_id=229186229]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0045645237, 1.1920929e-07, -0.008355379)
+transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, -0.0045645237, 1.1920929e-07, -0.008355379)
 
 [node name="Node3D" type="Node3D" parent="VisualPivot" unique_id=1736878744]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
 [node name="delivery_rider" parent="VisualPivot/Node3D" unique_id=1034058628 instance=ExtResource("2_4kuee")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=833789204]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.005, 0.9, -0.008)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.005, 1.0650167, -0.008)
 shape = SubResource("CapsuleShape3D_xrivr")
 
 [node name="CameraRig" type="Node3D" parent="." unique_id=358510010]
