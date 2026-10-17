@@ -12,9 +12,15 @@ extends CharacterBody3D
 @onready var visual: Node3D = $VisualPivot
 @onready var camera_rig: Node3D = $CameraRig
 @onready var spring_arm: SpringArm3D = $CameraRig/SpringArm3D
+@onready var camera: Camera3D = $CameraRig/SpringArm3D/Camera3D
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	
+	
+	# Garante que a câmera do jogador fica ativa ao entrar na cena
+	# (essencial para quando o jogador é re-instanciado ao desmontar da moto)
+	camera.current = true
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:

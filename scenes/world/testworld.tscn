@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://dgawalvy642em" path="res://scenes/player/Player.tscn" id="1_tve7f"]
 [ext_resource type="PackedScene" uid="uid://ceeuayk58c3my" path="res://assets/vehicles/low-poly_scooter.glb" id="2_u1678"]
+[ext_resource type="PackedScene" uid="uid://blc0cfgtyf6au" path="res://scenes/vehicles/Motorcycle.tscn" id="3_y4qoa"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_xrivr"]
 size = Vector3(71.52112, 1, 97.83032)
@@ -29,3 +30,6 @@ shape = SubResource("BoxShape3D_13qdw")
 
 [node name="Sketchfab_Scene" parent="moto" unique_id=46398332 instance=ExtResource("2_u1678")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.676638, 0.08084554, -6.503186)
+
+[node name="Motorcycle" parent="." unique_id=477703497 instance=ExtResource("3_y4qoa")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8086302, 0.08084483, 2.2691295)

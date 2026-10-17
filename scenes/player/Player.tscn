@@ -7,7 +7,7 @@
 radius = 0.35
 height = 2.362349
 
-[node name="Player" type="CharacterBody3D" unique_id=19288516]
+[node name="Player" type="CharacterBody3D" unique_id=19288516 groups=["player"]]
 script = ExtResource("1_gfjak")
 
 [node name="VisualPivot" type="Node3D" parent="." unique_id=229186229]
