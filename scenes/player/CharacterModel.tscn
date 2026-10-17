@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://b88p1cx38n3e2"]
+
+[ext_resource type="PackedScene" uid="uid://25q153hqb6wn" path="res://assets/characters/delivery_boy.glb" id="1_pdqg5"]
+
+[node name="CharacterModel" type="Node3D" unique_id=894942332]
+
+[node name="delivery_boy" parent="." unique_id=1034058628 instance=ExtResource("1_pdqg5")]
+transform = Transform3D(0.37591144, 0, 0.9266556, 0, 1, 0, -0.9266556, 0, 0.37591144, 0.48007178, 0, 0.40645254)

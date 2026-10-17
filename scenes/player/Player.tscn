@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://dgawalvy642em"]
+
+[ext_resource type="Script" uid="uid://btad8dekppim8" path="res://scenes/player/player_controller.gd" id="1_gfjak"]
+[ext_resource type="PackedScene" uid="uid://25q153hqb6wn" path="res://assets/characters/delivery_boy.glb" id="2_4kuee"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xrivr"]
+radius = 0.35
+height = 2.2
+
+[node name="Player" type="CharacterBody3D" unique_id=19288516]
+script = ExtResource("1_gfjak")
+
+[node name="VisualPivot" type="Node3D" parent="." unique_id=229186229]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0045645237, 1.1920929e-07, -0.008355379)
+
+[node name="Node3D" type="Node3D" parent="VisualPivot" unique_id=1736878744]
+
+[node name="delivery_rider" parent="VisualPivot/Node3D" unique_id=1034058628 instance=ExtResource("2_4kuee")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=833789204]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.005, 0.9, -0.008)
+shape = SubResource("CapsuleShape3D_xrivr")
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=358510010]
+transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, 0, 1.5, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig" unique_id=651404754]
+spring_length = 4.0
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D" unique_id=799736109]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6972876, 0.08601093, 0)
