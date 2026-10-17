@@ -1,12 +1,13 @@
 [gd_scene format=3 uid="uid://7a4lrpm1l035"]
 
 [ext_resource type="PackedScene" uid="uid://dgawalvy642em" path="res://scenes/player/Player.tscn" id="1_tve7f"]
+[ext_resource type="PackedScene" uid="uid://ceeuayk58c3my" path="res://assets/vehicles/low-poly_scooter.glb" id="2_u1678"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_xrivr"]
-size = Vector3(30, 1, 30)
+size = Vector3(71.52112, 1, 97.83032)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_13qdw"]
-size = Vector3(30, 1, 30)
+size = Vector3(70.15674, 1, 98.268555)
 
 [node name="Testworld" type="Node3D" unique_id=705770342]
 
@@ -15,11 +16,16 @@ size = Vector3(30, 1, 30)
 [node name="Ground" type="StaticBody3D" parent="." unique_id=173510040]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=19484018]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.76056, -0.5, -33.91516)
 mesh = SubResource("BoxMesh_xrivr")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=158152836]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.07837, -0.5, -34.638096)
 shape = SubResource("BoxShape3D_13qdw")
 
 [node name="Player" parent="." unique_id=19288516 instance=ExtResource("1_tve7f")]
+
+[node name="moto" type="CharacterBody3D" parent="." unique_id=514060961]
+
+[node name="Sketchfab_Scene" parent="moto" unique_id=46398332 instance=ExtResource("2_u1678")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.676638, 0.08084554, -6.503186)
