@@ -1,16 +1,17 @@
 [gd_scene format=3 uid="uid://blc0cfgtyf6au"]
 
+[ext_resource type="Script" uid="uid://cydaitycu724t" path="res://scenes/vehicles/motorcycle.gd" id="1_0602f"]
 [ext_resource type="PackedScene" uid="uid://ceeuayk58c3my" path="res://assets/vehicles/low-poly_scooter.glb" id="1_scooter"]
-[ext_resource type="Script" uid="uid://cydaitycu724t" path="res://scenes/vehicles/Motorcycle.gd" id="2_script"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_moto"]
 size = Vector3(0.8, 1, 2)
 
 [node name="Motorcycle" type="VehicleBody3D" unique_id=1999840412]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.119010925, 0, -0.8093562)
+mass = 43.0
 center_of_mass_mode = 1
 center_of_mass = Vector3(0, 0.6, 0)
-script = ExtResource("2_script")
+script = ExtResource("1_0602f")
 
 [node name="Model" type="Node3D" parent="." unique_id=587915281]
 
@@ -32,3 +33,18 @@ current = true
 
 [node name="DismountPosition" type="Marker3D" parent="." unique_id=1205682185]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+
+[node name="RodaTraseira" type="VehicleWheel3D" parent="." unique_id=262497773]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.11, 0.3, 0.8121133)
+engine_force = 132.61
+brake = 29.47
+use_as_traction = true
+wheel_radius = 0.3
+wheel_friction_slip = 40.0
+
+[node name="RodaFrontal" type="VehicleWheel3D" parent="." unique_id=1327440480]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.11, 0.3, -0.902)
+steering = 1.2217305
+use_as_steering = true
+wheel_radius = 0.3
+wheel_friction_slip = 40.0
