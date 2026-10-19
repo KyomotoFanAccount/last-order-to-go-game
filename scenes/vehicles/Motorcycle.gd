@@ -1,14 +1,24 @@
 extends VehicleBody3D
 
 @export_group("Força do Veículo")
-@export var max_engine_force: float = 300.0  # Aumentado um pouco para garantir força
+@export var max_engine_force: float = 300.0
 @export var max_brake_force: float = 20.0
 @export var max_steer_angle: float = 0.5  # Radianos (~28 a 30 graus)
 @export var steer_speed: float = 2.5
 
+@export_group("Empinar (Wheelie)")
+@export var wheelie_torque: float = 200.0
+
+@export_group("Câmera")
+@export var mouse_sensitivity: float = 0.003
+@export var min_pitch: float = -60.0
+@export var max_pitch: float = 50.0
+
 @export_group("Interação")
 @export var interact_distance: float = 3.0
 
+@onready var camera_rig: Node3D = $CameraRig
+@onready var spring_arm: SpringArm3D = $CameraRig/SpringArm3D
 @onready var camera: Camera3D = $CameraRig/SpringArm3D/Camera3D
 @onready var dismount_position: Marker3D = $DismountPosition
 @onready var roda_traseira: VehicleWheel3D = $RodaTraseira
@@ -21,18 +31,39 @@ func _ready() -> void:
 	if camera:
 		camera.current = false
 
+func _unhandled_input(event: InputEvent) -> void:
+	if not is_mounted:
+		return
+
+	# Liberta o rato com o ESC
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+	# Controlo da câmara com o rato
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		# Rotação vertical (Pitch) no SpringArm3D
+		if spring_arm:
+			spring_arm.rotation.x -= event.relative.y * mouse_sensitivity
+			spring_arm.rotation.x = clampf(
+				spring_arm.rotation.x,
+				deg_to_rad(min_pitch),
+				deg_to_rad(max_pitch)
+			)
+			
+		# Rotação horizontal (Yaw) apenas no CameraRig (a moto fica a direito)
+		if camera_rig:
+			camera_rig.rotation.y -= event.relative.x * mouse_sensitivity
+
 func _physics_process(delta: float) -> void:
 	if is_mounted:
 		_process_vehicle_inputs(delta)
 		_check_dismount()
 	else:
-		# Quando ninguém está a conduzir, zera a força e trava
 		engine_force = 0.0
 		brake = 5.0
 		_check_mount()
 
 func _process_vehicle_inputs(delta: float) -> void:
-	# Aceleração (W para frente, S para trás/travão)
 	var accel_input = 0.0
 	if Input.is_key_pressed(KEY_W):
 		accel_input = 1.0
@@ -47,25 +78,19 @@ func _process_vehicle_inputs(delta: float) -> void:
 		brake = abs(accel_input) * max_brake_force
 	else:
 		engine_force = 0.0
-		brake = 0.5 # Atrito natural ao soltar as teclas
+		brake = 0.5
 
-	# Direção (A para a esquerda, D para a direita)
 	var target_steer = 0.0
 	if Input.is_key_pressed(KEY_A):
 		target_steer = max_steer_angle
 	elif Input.is_key_pressed(KEY_D):
 		target_steer = -max_steer_angle
 
-	# Inércia/peso no guiador
 	steering = move_toward(steering, target_steer, steer_speed * delta)
 	
-	# Diagnóstico visual na consola para ver se a roda está a tocar no chão
-	if roda_traseira and roda_traseira.is_in_contact():
-		# Podes descomentar a linha abaixo se quiseres ver a força a atuar no output
-		# print("A pitar o chão! Força: ", engine_force)
-		pass
-	else:
-		print("AVISO: A roda traseira está no ar ou a colisão da moto está a segurá-la!")
+	# Mecânica de Empinar (Wheelie): W + Espaço
+	if accel_input > 0 and Input.is_key_pressed(KEY_SPACE):
+		apply_torque(global_transform.basis * Vector3(-wheelie_torque, 0, 0))
 
 func _check_mount() -> void:
 	if not _is_interact_just_pressed():
@@ -75,8 +100,7 @@ func _check_mount() -> void:
 	if player == null:
 		return
 
-	var distancia = global_position.distance_to(player.global_position)
-	if distancia <= interact_distance:
+	if global_position.distance_to(player.global_position) <= interact_distance:
 		_mount(player)
 
 func _check_dismount() -> void:
@@ -86,7 +110,7 @@ func _check_dismount() -> void:
 
 func _mount(player: Node3D) -> void:
 	is_mounted = true
-	player.queue_free()  # Remove o personagem do mundo
+	player.queue_free()
 
 	if camera:
 		camera.current = true
@@ -97,7 +121,6 @@ func _dismount() -> void:
 	if camera:
 		camera.current = false
 
-	# Recria o jogador na posição de saída
 	var new_player = _player_scene.instantiate()
 	get_parent().add_child(new_player)
 	
