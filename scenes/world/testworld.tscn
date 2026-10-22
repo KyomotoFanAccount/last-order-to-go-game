@@ -48,3 +48,17 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.991598, 0, 9.835286)
 
 [node name="Motorcycle" parent="." unique_id=983805966 instance=ExtResource("8_ici0x")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.802741, 0.08084459, 14.998564)
+
+[node name="Motorcycle2" parent="." unique_id=1349306608 instance=ExtResource("5_axoqh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.639997, 0.08084459, 18.40725)
+
+[node name="Motorcycle4" parent="." unique_id=1500474628 instance=ExtResource("8_ici0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.947016, 0.08084411, 9.046508)
+
+[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=22344603]
+transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 2.3821688, 0)
+use_collision = true
+
+[node name="CSGBox3D2" type="CSGBox3D" parent="." unique_id=341949672]
+transform = Transform3D(23.18222, 6.211657, 0, -6.211657, 23.18222, 0, 0, 0, 24, 11.3698845, -9.286296, -0.06140709)
+use_collision = true

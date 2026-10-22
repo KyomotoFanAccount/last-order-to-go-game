@@ -1,20 +1,23 @@
 extends VehicleBody3D
 # Moto estilo GTA 5 em cima do VehicleBody3D, com drift estilo Mario Kart.
 # Controles:
-#   E (ação "interact") = montar / desmontar
+#   F = montar / desmontar
 #   W = acelerar | S = frear / ré | A / D = virar
 #   Espaço (com W) = empinar | Mouse = câmera | ESC = soltar o mouse
 #   Shift (segurando) + A/D em velocidade = drift (solte para ganhar turbo)
+#   No ar: W/S = inclinar o nariz | Q/E = rolar de lado | A/D = girar no próprio eixo (estilo GTA)
 #   ↑ / ↓ = aumenta / diminui a velocidade máxima (teste)
 
 @export_group("Força do Veículo")
-@export var max_engine_force: float = 600.0
+@export var max_engine_force: float = 2000.0
 @export var max_speed: float = 40.0           # m/s (40 m/s = 144 km/h)
 @export var brake_strength: float = 6.0       # força máxima do freio (sobe aos poucos)
 @export var brake_ramp_time: float = 0.7      # segundos até o freio chegar na força máxima
 @export var idle_brake: float = 0.4           # freio-motor ao soltar o acelerador
 @export var allow_reverse: bool = true
-@export var reverse_speed: float = 8.0        # m/s
+@export var reverse_speed: float = 10.0       # m/s (36 km/h)
+@export var reverse_force_mult: float = 1.0   # força do motor na ré (1 = igual à frente)
+@export var reverse_accel: float = 6.0        # m/s²: empurrão extra direto para trás
 
 @export_group("Direção (estilo GTA)")
 @export var max_steer_deg: float = 35.0       # ângulo máximo da roda em baixa velocidade
@@ -68,8 +71,15 @@ extends VehicleBody3D
 @export var visual_steer_axis: Vector3 = Vector3.UP # eixo de giro (local do nó)
 @export var visual_invert: bool = false           # marque se o garfo girar para o lado errado
 
-@export_group("Controle no Ar")
-@export var air_control_torque: float = 60.0  # W/S inclinam a moto no ar
+@export_group("Controle no Ar (estilo GTA)")
+@export var air_min_time: float = 0.15        # s no ar antes de liberar o controle (evita ativar em trepidação)
+@export var air_pitch_speed: float = 3.0      # rad/s: W/S inclinam o nariz
+@export var air_roll_speed: float = 4.0       # rad/s: Q/E rolam a moto de lado
+@export var air_yaw_speed: float = 3.0        # rad/s: A/D giram a moto no próprio eixo (vertical)
+@export var air_accel: float = 14.0           # rad/s²: rapidez para atingir a rotação desejada
+@export var air_brake: float = 3.0            # rad/s²: quanto a rotação freia sozinha sem input (0 = gira para sempre)
+@export var ground_level_speed: float = 8.0   # quão rápido a moto se endireita ao pousar
+@export var ground_level_max: float = 6.0     # rad/s: limite dessa correção
 
 @export_group("Teste de Velocidade")
 @export var speed_step_kmh: float = 10.0       # quanto muda a cada toque em ↑ / ↓
@@ -113,6 +123,10 @@ var _rear_friction_base: float = 10.5
 var _front_visual_base: Transform3D = Transform3D.IDENTITY
 var _front_visual_angle: float = 0.0
 var _last_turn_input: float = 0.0
+
+var _grounded: bool = false
+var _air_time: float = 0.0
+var _in_air: bool = false
 
 var _speed_label: Label
 var _drift_label: Label
@@ -177,8 +191,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera_yaw -= event.relative.x * mouse_sensitivity
 
 func _physics_process(delta: float) -> void:
+	_update_air_state(delta)
+
 	if is_mounted:
 		_process_vehicle_inputs(delta)
+		_air_control(delta)
 		_limit_speed()
 		_check_dismount()
 	else:
@@ -189,7 +206,7 @@ func _physics_process(delta: float) -> void:
 		_last_turn_input = 0.0
 		_check_mount()
 
-	_lock_roll()
+	_stabilize_roll()
 	_update_lean(delta)
 	_update_front_visual(delta)
 	_update_hud()
@@ -241,7 +258,11 @@ func _process_vehicle_inputs(delta: float) -> void:
 			brake_target = brake_strength
 		elif allow_reverse:
 			var reverse_ratio = clampf(-forward_speed / reverse_speed, 0.0, 1.0)
-			engine_force = -max_engine_force * 0.5 * (1.0 - reverse_ratio * reverse_ratio)
+			var reverse_power = 1.0 - reverse_ratio * reverse_ratio
+			engine_force = -max_engine_force * reverse_force_mult * reverse_power
+			# Empurrão direto para trás: garante que a ré ande mesmo se a roda não tracionar
+			if grounded:
+				apply_central_force(global_transform.basis.z * mass * reverse_accel * reverse_power)
 		else:
 			engine_force = 0.0
 			brake_target = brake_strength
@@ -319,14 +340,72 @@ func _process_vehicle_inputs(delta: float) -> void:
 			var torque = clampf((desired_rate - pitch_rate) * wheelie_gain, -wheelie_torque, wheelie_torque)
 			apply_torque(global_transform.basis.x * torque)
 
-	# --- Controle no ar (W desce o nariz, S levanta) ---
-	if not grounded:
-		var air_input = 0.0
-		if s_pressed:
-			air_input += 1.0
-		if w_pressed:
-			air_input -= 1.0
-		apply_torque(global_transform.basis.x * air_control_torque * air_input)
+# ------------------------------------------------------------------
+# Controle no ar (estilo GTA)
+# ------------------------------------------------------------------
+
+func _update_air_state(delta: float) -> void:
+	var front_contact = front_wheel != null and front_wheel.is_in_contact()
+	var rear_contact = rear_wheel != null and rear_wheel.is_in_contact()
+	_grounded = front_contact or rear_contact
+	if _grounded:
+		_air_time = 0.0
+	else:
+		_air_time += delta
+	_in_air = _air_time >= air_min_time
+
+# W/S = inclina o nariz (pitch), Q/E = rola de lado (roll), A/D = gira no próprio eixo (yaw).
+# Controla a velocidade angular direto, então a resposta é firme e previsível.
+func _air_control(delta: float) -> void:
+	if not _in_air:
+		return
+
+	var pitch_in = 0.0
+	if Input.is_key_pressed(KEY_S):
+		pitch_in += 1.0   # S levanta o nariz
+	if Input.is_key_pressed(KEY_W):
+		pitch_in -= 1.0   # W abaixa o nariz
+
+	var roll_in = 0.0
+	if Input.is_key_pressed(KEY_E):
+		roll_in += 1.0    # E rola para a direita
+	if Input.is_key_pressed(KEY_Q):
+		roll_in -= 1.0    # Q rola para a esquerda
+
+	var yaw_in = 0.0
+	if Input.is_key_pressed(KEY_A):
+		yaw_in += 1.0     # A gira para a esquerda
+	if Input.is_key_pressed(KEY_D):
+		yaw_in -= 1.0     # D gira para a direita
+
+	var b = global_transform.basis
+	_apply_air_rate(b.x, pitch_in * air_pitch_speed, pitch_in != 0.0, delta)
+	_apply_air_rate(-b.z, roll_in * air_roll_speed, roll_in != 0.0, delta)
+	_apply_air_rate(b.y, yaw_in * air_yaw_speed, yaw_in != 0.0, delta)
+
+func _apply_air_rate(axis: Vector3, target: float, has_input: bool, delta: float) -> void:
+	var current = angular_velocity.dot(axis)
+	var rate = air_accel if has_input else air_brake
+	angular_velocity += axis * (move_toward(current, target, rate * delta) - current)
+
+# No chão: trava a rolagem e endireita a moto (importante ao pousar torta).
+# No ar: deixa a rolagem livre.
+func _stabilize_roll() -> void:
+	if _in_air:
+		return
+
+	var fwd = -global_transform.basis.z
+	var up = global_transform.basis.y
+
+	# Zera só a rolagem (eixo local Z) sem mexer na transform do corpo físico
+	angular_velocity -= fwd * angular_velocity.dot(fwd)
+
+	# Se está de ponta-cabeça, não corrige (isso vira "queda" depois)
+	if up.dot(Vector3.UP) > 0.3:
+		var target_up = Vector3.UP - fwd * Vector3.UP.dot(fwd)
+		if target_up.length() > 0.2:
+			var angle = up.signed_angle_to(target_up.normalized(), fwd)
+			angular_velocity += fwd * clampf(angle * ground_level_speed, -ground_level_max, ground_level_max)
 
 # ------------------------------------------------------------------
 # Drift estilo Mario Kart
@@ -407,12 +486,6 @@ func _limit_speed() -> void:
 		horizontal = horizontal.normalized() * limit
 		linear_velocity = Vector3(horizontal.x, linear_velocity.y, horizontal.z)
 
-# Zera só a rolagem (eixo local Z) sem mexer na transform do corpo físico
-func _lock_roll() -> void:
-	var roll_axis = global_transform.basis.z
-	var roll_vel = angular_velocity.dot(roll_axis)
-	angular_velocity -= roll_axis * roll_vel
-
 # Gira só o visual do garfo/roda da frente. Não altera steering nem a física.
 func _update_front_visual(delta: float) -> void:
 	if front_visual == null:
@@ -438,7 +511,7 @@ func _update_lean(delta: float) -> void:
 		return
 
 	var target = 0.0
-	if lean_enabled and is_mounted:
+	if lean_enabled and is_mounted and not _in_air:
 		var forward_speed = -global_transform.basis.z.dot(linear_velocity)
 		var yaw_rate = angular_velocity.dot(global_transform.basis.y)
 		target = atan(forward_speed * yaw_rate / 9.8) * lean_factor
@@ -512,7 +585,7 @@ func _update_hud() -> void:
 				_drift_label.add_theme_color_override("font_color", Color(0.75, 0.35, 1.0))
 
 # ------------------------------------------------------------------
-# Montar / desmontar (tecla E = ação "interact")
+# Montar / desmontar (tecla F)
 # ------------------------------------------------------------------
 
 func _check_mount() -> void:
@@ -571,8 +644,9 @@ func _find_player() -> Node3D:
 
 	return null
 
+# Detecta o toque na tecla F (só dispara uma vez por aperto)
 func _is_interact_just_pressed() -> bool:
-	var pressed = Input.is_action_just_pressed("interact")
+	var pressed = Input.is_key_pressed(KEY_F)
 	if pressed and not _interact_was_pressed:
 		_interact_was_pressed = true
 		return true
