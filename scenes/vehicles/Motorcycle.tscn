@@ -4,29 +4,28 @@
 [ext_resource type="PackedScene" uid="uid://ceeuayk58c3my" path="res://assets/vehicles/low-poly_scooter.glb" id="1_scooter"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_moto"]
-size = Vector3(0.8, 1, 2)
+size = Vector3(0.8, 1, 2.515625)
 
-[node name="Motorcycle" type="VehicleBody3D" unique_id=1999840412]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.119010925, 0, -0.8093562)
+[node name="Motorcycle" type="VehicleBody3D" unique_id=1462046149]
 mass = 43.0
 center_of_mass_mode = 1
 center_of_mass = Vector3(0, 0.2, 0)
 script = ExtResource("1_0602f")
-max_engine_force = 500.0
-max_brake_force = 5.0
+wheelie_force = 500.0
 
 [node name="Model" type="Node3D" parent="." unique_id=587915281]
 
 [node name="Sketchfab_Scene" parent="Model" unique_id=867107368 instance=ExtResource("1_scooter")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=366144138]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.003)
 shape = SubResource("BoxShape3D_moto")
 
 [node name="CameraRig" type="Node3D" parent="." unique_id=342599493]
-transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, 0, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, 0, 1.6485338, 0)
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CameraRig" unique_id=1101524150]
+transform = Transform3D(1, 0, 0, 0, 1.0000001, 2.9802322e-08, 0, -2.9802322e-08, 1.0000001, 0, 0.46277082, 0.081599)
 spring_length = 5.0
 
 [node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D" unique_id=59521419]
@@ -36,17 +35,12 @@ current = true
 [node name="DismountPosition" type="Marker3D" parent="." unique_id=1205682185]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 
-[node name="RodaTraseira" type="VehicleWheel3D" parent="." unique_id=262497773]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.11, 0.3, 0.8121133)
-engine_force = 150.0
-brake = 8.0
+[node name="RodaTraseira" type="VehicleWheel3D" parent="." unique_id=1367499826]
+transform = Transform3D(-0.99999994, 0, 8.742278e-08, 0, 1, 0, -8.742277e-08, 0, -1, 0, 0.3, 0.812)
+engine_force = 103.14
+brake = 28.83
 use_as_traction = true
-wheel_radius = 0.3
-wheel_friction_slip = 40.0
 
-[node name="RodaFrontal" type="VehicleWheel3D" parent="." unique_id=1327440480]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.11, 0.3, -0.902)
-steering = 1.2217305
+[node name="RodaFrontal" type="VehicleWheel3D" parent="." unique_id=1301198062]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.3, -0.902)
 use_as_steering = true
-wheel_radius = 0.3
-wheel_friction_slip = 40.0
