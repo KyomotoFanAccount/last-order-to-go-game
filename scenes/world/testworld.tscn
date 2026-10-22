@@ -1,14 +1,20 @@
 [gd_scene format=3 uid="uid://7a4lrpm1l035"]
 
-[ext_resource type="PackedScene" uid="uid://dgawalvy642em" path="res://scenes/player/Player.tscn" id="1_tve7f"]
+[ext_resource type="Texture2D" uid="uid://wmu3d5im02bb" path="res://textura/Light/texture_06.png" id="1_k66ko"]
+[ext_resource type="PackedScene" uid="uid://c5vj1qhqsukfm" path="res://scenes/vehicles-terceiro/Motorcycle.tscn" id="2_l05mh"]
 [ext_resource type="PackedScene" uid="uid://ceeuayk58c3my" path="res://assets/vehicles/low-poly_scooter.glb" id="2_u1678"]
-[ext_resource type="PackedScene" uid="uid://blc0cfgtyf6au" path="res://scenes/vehicles/Motorcycle.tscn" id="3_y4qoa"]
+[ext_resource type="PackedScene" uid="uid://dyqrsp6vc5lwh" path="res://scenes/vehicles-backup/Motorcycle.tscn" id="5_axoqh"]
+[ext_resource type="PackedScene" uid="uid://dgawalvy642em" path="res://scenes/player/Player.tscn" id="7_iivpr"]
+[ext_resource type="PackedScene" uid="uid://blc0cfgtyf6au" path="res://scenes/vehicles/Motorcycle.tscn" id="8_ici0x"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_xrivr"]
-size = Vector3(71.52112, 1, 97.83032)
+size = Vector3(116.628815, 1, 118.00148)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_axoqh"]
+albedo_texture = ExtResource("1_k66ko")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_13qdw"]
-size = Vector3(70.15674, 1, 98.268555)
+size = Vector3(2868.4106, 1, 4055.002)
 
 [node name="Testworld" type="Node3D" unique_id=705770342]
 
@@ -17,19 +23,28 @@ size = Vector3(70.15674, 1, 98.268555)
 [node name="Ground" type="StaticBody3D" parent="." unique_id=173510040]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=19484018]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.76056, -0.5, -33.91516)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.394722, -0.6851139, -5.3802986)
 mesh = SubResource("BoxMesh_xrivr")
+surface_material_override/0 = SubResource("StandardMaterial3D_axoqh")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=158152836]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.07837, -0.5, -34.638096)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -306.0206, -0.5, -1137.3872)
 shape = SubResource("BoxShape3D_13qdw")
 
-[node name="Player" parent="." unique_id=19288516 instance=ExtResource("1_tve7f")]
+[node name="Motorcycle" parent="Ground" unique_id=1462046149 instance=ExtResource("2_l05mh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.522377, 0.080843635, 34.738033)
 
 [node name="moto" type="CharacterBody3D" parent="." unique_id=514060961]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.393175, 0, 0)
 
 [node name="Sketchfab_Scene" parent="moto" unique_id=46398332 instance=ExtResource("2_u1678")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.676638, 0.08084554, -6.503186)
 
-[node name="Motorcycle" parent="." unique_id=477703497 instance=ExtResource("3_y4qoa")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8086302, 0.08084483, 2.2691295)
+[node name="Motorcycle3" parent="." unique_id=693609182 instance=ExtResource("5_axoqh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37.249332, 0.08084554, 8.970184)
+
+[node name="Player" parent="." unique_id=19288516 instance=ExtResource("7_iivpr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.991598, 0, 9.835286)
+
+[node name="Motorcycle" parent="." unique_id=983805966 instance=ExtResource("8_ici0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.802741, 0.08084459, 14.998564)

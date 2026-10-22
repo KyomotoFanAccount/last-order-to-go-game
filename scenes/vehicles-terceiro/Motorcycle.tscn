@@ -1,0 +1,78 @@
+[gd_scene format=3 uid="uid://c5vj1qhqsukfm"]
+
+[ext_resource type="Script" uid="uid://m6vi6dblqltp" path="res://scripts/moto/vehicle.gd" id="1_re5iv"]
+[ext_resource type="PackedScene" uid="uid://ceeuayk58c3my" path="res://assets/vehicles/low-poly_scooter.glb" id="2_re5iv"]
+[ext_resource type="Script" uid="uid://bn4g52o0jfs75" path="res://scripts/moto/wheel.gd" id="3_luoij"]
+
+[sub_resource type="Curve" id="Curve_ajfcs"]
+_data = [Vector2(0, 0.5), 0.0, 0.0, 0, 0, Vector2(0.36603773, 1), 0.0, 0.0, 0, 0, Vector2(0.645283, 0.64285713), 0.0, 0.0, 0, 0, Vector2(1, 0.63265306), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_iai08"]
+size = Vector3(1, 1, 2.5200195)
+
+[node name="Motorcycle" type="RigidBody3D" unique_id=1936660702 node_paths=PackedStringArray("front_left_wheel", "front_right_wheel", "rear_left_wheel", "rear_right_wheel")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1386497, 0)
+script = ExtResource("1_re5iv")
+front_left_wheel = NodePath("FrontLeftRaycast")
+front_right_wheel = NodePath("FrontRightRaycast")
+rear_left_wheel = NodePath("RearLeftRaycast")
+rear_right_wheel = NodePath("RearRightRaycast")
+steering_speed_decay = 0.07
+max_steering_angle = 0.24609142453120045
+max_torque = 400.0
+max_rpm = 4000.0
+idle_rpm = 275.0
+torque_curve = SubResource("Curve_ajfcs")
+center_of_gravity_height_offset = -0.42
+rear_spring_length = 0.12
+rear_damping_ratio = 0.0
+rear_rebound_damp_multiplier = 2.0
+front_tire_radius = 0.357
+rear_tire_radius = 0.35
+
+[node name="Model" type="Node3D" parent="." unique_id=587915281]
+
+[node name="Sketchfab_Scene" parent="Model" unique_id=867107368 instance=ExtResource("2_re5iv")]
+
+[node name="RearRightRaycast" type="RayCast3D" parent="." unique_id=873363768 node_paths=PackedStringArray("wheel_node")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.305, 0.803)
+script = ExtResource("3_luoij")
+wheel_node = NodePath("Node3D")
+
+[node name="Node3D" type="Node3D" parent="RearRightRaycast" unique_id=228244782]
+
+[node name="B_Tire" type="Node3D" parent="RearRightRaycast/Node3D" unique_id=266961382]
+
+[node name="RearLeftRaycast" type="RayCast3D" parent="." unique_id=357590537 node_paths=PackedStringArray("wheel_node")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.129, 0.3, -0.8)
+script = ExtResource("3_luoij")
+wheel_node = NodePath("Node3D")
+
+[node name="Node3D" type="Node3D" parent="RearLeftRaycast" unique_id=564835265]
+
+[node name="B_Tire" type="Node3D" parent="RearLeftRaycast/Node3D" unique_id=1584323502]
+
+[node name="FrontLeftRaycast" type="RayCast3D" parent="." unique_id=1575842941 node_paths=PackedStringArray("wheel_node")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.3, 0.8)
+script = ExtResource("3_luoij")
+wheel_node = NodePath("Node3D")
+
+[node name="Node3D" type="Node3D" parent="FrontLeftRaycast" unique_id=735547208]
+
+[node name="F_Tire" type="Node3D" parent="FrontLeftRaycast/Node3D" unique_id=1419220176]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, -0.3, 0.8)
+
+[node name="FrontRightRaycast" type="RayCast3D" parent="." unique_id=537326257 node_paths=PackedStringArray("wheel_node")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.3, -0.8)
+script = ExtResource("3_luoij")
+wheel_node = NodePath("Node3D")
+
+[node name="Node3D" type="Node3D" parent="FrontRightRaycast" unique_id=228050349]
+
+[node name="F_Tire" type="Node3D" parent="FrontRightRaycast/Node3D" unique_id=1289427775]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, -0.3, 0.8)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1951326988]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -0.016552746)
+shape = SubResource("BoxShape3D_iai08")

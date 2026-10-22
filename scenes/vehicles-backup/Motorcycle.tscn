@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://dyqrsp6vc5lwh"]
+
+[ext_resource type="Script" uid="uid://3uvwdaja0hu2" path="res://scenes/vehicles-backup/Motorcycle.gd" id="1_1id8h"]
+[ext_resource type="PackedScene" uid="uid://ceeuayk58c3my" path="res://assets/vehicles/low-poly_scooter.glb" id="2_l1r3f"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_moto"]
+size = Vector3(0.8, 1, 2)
+
+[node name="Motorcycle" type="CharacterBody3D" unique_id=693609182]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.119010925, 0, -0.8093562)
+script = ExtResource("1_1id8h")
+
+[node name="Model" type="Node3D" parent="." unique_id=587915281]
+
+[node name="Sketchfab_Scene" parent="Model" unique_id=867107368 instance=ExtResource("2_l1r3f")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=366144138]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_moto")
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=342599493]
+transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, 0, 1.5, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig" unique_id=1101524150]
+spring_length = 5.0
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D" unique_id=59521419]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
+[node name="DismountPosition" type="Marker3D" parent="." unique_id=1205682185]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
