@@ -6,7 +6,8 @@ extends VehicleBody3D
 #   Espaço = empinar a roda da frente para cima (com W, ou sozinho se a moto já estiver em movimento)
 #   Ctrl (segurando, em movimento) = empinar a traseira (stoppie: freia e levanta a bunda da moto)
 #   C = pular
-#   Corrimão: passe por cima dele no ar e a moto engata e desliza até o fim (A/D escolhem o sentido)
+#   Corrimão: no ar, com a frente ou a traseira da moto apontando para o corrimão (zona da ponta ou do lado),
+#             a moto cai suave até ele, vira de lado (estilo skate) e desliza até o fim (A/D escolhem o lado)
 #   Mouse = câmera | ESC = soltar o mouse
 #   Shift (segurando) + A/D em velocidade = drift (solte para ganhar turbo)
 #   No ar: W/S = inclinar o nariz | Q/E = rolar de lado | A/D = girar no próprio eixo (estilo GTA)
@@ -70,20 +71,28 @@ extends VehicleBody3D
 
 @export_group("Grind (corrimões)")
 @export var grind_enabled: bool = true
-@export var grind_needs_air: bool = true      # true = só engata se a moto estiver no ar (pulou ou caiu em cima)
-@export var grind_needs_turn_key: bool = false # true = só engata se apertar A ou D | false = engata sozinho ao passar por cima
-@export var grind_auto_engage: bool = true    # engata mesmo sem alinhar (a direção vem de A/D ou da frente da moto)
-@export var grind_allow_jump_exit: bool = false # true = dá para sair do corrimão pulando (C); false = só sai no fim
-@export var grind_grab_distance: float = 3.0  # m: distância horizontal máxima da moto até a linha do corrimão
-@export var grind_grab_height: float = 4.0    # m: altura máxima da moto acima da linha do corrimão para engatar
-@export var grind_height: float = 0.6         # m: altura da moto acima do corrimão (se flutuar ou afundar, ajuste aqui)
-@export var grind_min_speed: float = 5.0      # m/s (≈ 18 km/h): velocidade mínima para engatar
-@export var grind_min_align: float = 0.35     # 0 a 1: alinhamento necessário quando NÃO se usa A/D para engatar
-@export var grind_friction: float = 0.0       # m/s²: velocidade perdida por segundo durante o grind (0 = mantém a velocidade)
-@export var grind_end_speed: float = 2.0      # m/s: (não usado enquanto o grind só termina no fim do corrimão)
-@export var grind_snap_speed: float = 18.0    # quão rápido a moto "gruda" no corrimão
-@export var grind_cooldown: float = 0.5       # s sem poder engatar de novo depois de sair
-@export var grind_points_per_sec: float = 200.0 # pontos por segundo de grind (entra no combo)
+@export var grind_needs_air: bool = true         # true = só engata se a moto estiver no ar
+@export var grind_probe_length: float = 6.0       # m: alcance das linhas que saem da frente e de trás da moto
+@export var grind_probe_tolerance: float = 0.3   # m: folga extra (além da metade da largura do corrimão) para a linha "tocar" nele
+@export var grind_end_zone_angle_deg: float = 35.0 # graus: abertura do funil azul (zona das pontas do corrimão)
+@export var grind_end_distance: float = 3.5      # m: zona AZUL: distância máxima do centro da moto até a ponta do corrimão
+@export var grind_side_distance: float = 2.5     # m: zona LARANJA: distância máxima do centro da moto até o corrimão
+@export var grind_must_approach: bool = true     # true = só engata se a moto estiver indo em direção ao corrimão (ou já em cima dele)
+@export var grind_debug: bool = false            # true = escreve na aba Saída qual zona engatou (para ajustar)
+@export var grind_grab_height: float = 8.0    # m: altura máxima da moto acima da linha do corrimão para engatar (quanto mais alto, mais tempo a queda leva)
+@export var grind_max_rise_speed: float = 8.0    # m/s: se estiver subindo mais rápido que isso, ainda não engata (baixe para só engatar na descida)
+@export var grind_max_pitch_deg: float = 55.0    # graus: inclinação máxima do nariz (X) para engatar (+ ou -). Mesmo valor do Rotation X no Inspetor
+@export var grind_max_roll_deg: float = 45.0     # graus: inclinação máxima de lado (Z) para engatar (+ ou -). Mesmo valor do Rotation Z no Inspetor
+@export var grind_height: float = 1.1            # m: altura do centro da moto acima da linha do corrimão (se flutuar ou afundar, ajuste aqui)
+@export var grind_min_speed: float = 5.0         # m/s (≈ 18 km/h): velocidade mínima para engatar
+@export var grind_min_time: float = 0.3         # s: duração mínima da entrada (quando a moto já está na altura do corrimão)
+@export var grind_max_approach_time: float = 3.0 # s: tempo máximo de queda até o corrimão (mais alto que isso, não engata)
+@export var grind_land_margin: float = 1.0       # m: o pouso previsto precisa ficar pelo menos isso longe das pontas do corrimão
+@export var grind_exit_time: float = 0.25        # s: tempo da moto para girar de volta para a frente ao sair do corrimão
+@export var grind_friction: float = 0.0          # m/s²: velocidade perdida por segundo durante o grind (0 = mantém a velocidade)
+@export var grind_cooldown: float = 0.5          # s sem poder engatar de novo depois de sair
+@export var grind_allow_jump_exit: bool = false  # true = dá para sair do corrimão pulando (C); false = só sai no fim
+@export var grind_points_per_sec: float = 200.0  # pontos por segundo de grind (entra no combo)
 
 @export_group("Drift (estilo Mario Kart)")
 @export var drift_enabled: bool = true
@@ -215,6 +224,22 @@ var _grind_rail: Node3D = null
 var _grind_s: float = 0.0             # distância (m) já percorrida desde a ponta de trás do corrimão
 var _grind_way: float = 1.0           # +1 = indo para a ponta da frente, -1 = para a de trás
 var _grind_speed: float = 0.0
+var _grind_slide_dir: Vector3 = Vector3.FORWARD  # direção do deslize ao longo do corrimão
+var _grind_side: float = 1.0          # qual lado da moto fica virado para a frente (+1 ou -1)
+var _grind_capturing: bool = false    # true durante a queda/giro até o corrimão
+var _grind_cap_time: float = 0.0      # tempo já gasto na queda (s)
+var _grind_cap_duration: float = 0.3  # tempo total da queda (s): o que a moto levaria para chegar ao corrimão
+var _grind_cap_ballistic: bool = false # true = queda natural (gravidade); false = subida/ajuste suave
+var _grind_cap_gravity: float = 9.8
+var _grind_cap_p0: Vector3 = Vector3.ZERO     # posição ao engatar
+var _grind_cap_v0: Vector3 = Vector3.ZERO     # velocidade ao engatar
+var _grind_cap_land: Vector3 = Vector3.ZERO   # ponto de pouso no corrimão
+var _grind_cap_v1h: Vector2 = Vector2.ZERO    # velocidade horizontal ao pousar (ao longo do corrimão)
+var _grind_land_s: float = 0.0        # posição no corrimão (m) onde a moto pousa
+var _grind_start_quat: Quaternion = Quaternion.IDENTITY
+var _grind_exit_left: float = 0.0     # s restantes do giro de volta ao sair do corrimão
+var _grind_exit_from: Quaternion = Quaternion.IDENTITY
+var _grind_exit_to: Quaternion = Quaternion.IDENTITY
 var _grind_cooldown_left: float = 0.0
 var _grind_scoring: bool = false
 var _gravity_scale_base: float = 1.0
@@ -347,6 +372,7 @@ func _physics_process(delta: float) -> void:
 		_last_turn_input = 0.0
 		_check_mount()
 
+	_update_grind_exit(delta)
 	_update_wheel_friction(delta)
 	_update_score(delta)
 	if not _grinding:
@@ -381,36 +407,59 @@ func _do_jump() -> void:
 
 # ------------------------------------------------------------------
 # Grind em corrimões (estilo skate / Bomb Rush)
-# No ar, por cima de um corrimão (nó do grupo "grind_rail"), aperte A ou D:
-# a moto "engata", o jogo desliga a física normal e leva a moto ao longo do
-# corrimão até o FIM. A = vai para a ponta que está à esquerda da moto,
-# D = para a ponta da direita.
+# Engata quando a moto está no ar, perto de um corrimão (nó do grupo "grind_rail"), e a linha
+# que sai da frente/traseira da moto toca nele. Duas zonas:
+#   AZUL (pontas do corrimão): vale a distância do centro da moto até a ponta.
+#   LARANJA (lados): vale a distância do centro da moto até o corrimão.
+# 1) APROXIMAÇÃO: sem controle, a moto cai naturalmente (gravidade normal) até o corrimão. O giro de lado
+#    e o ajuste horizontal levam exatamente o tempo dessa queda: quanto mais alto, mais devagar ela se prepara.
+# 2) DESLIZE: de lado (estilo skate), até o FIM do corrimão.
+# 3) SAÍDA: na ponta a moto gira de volta para a frente e a física normal volta.
 # ------------------------------------------------------------------
+
+# Menor distância entre dois segmentos no plano horizontal (0 = se cruzam)
+func _segment_distance_2d(a1: Vector2, a2: Vector2, b1: Vector2, b2: Vector2) -> float:
+	if Geometry2D.segment_intersects_segment(a1, a2, b1, b2) != null:
+		return 0.0
+	var best = a1.distance_to(Geometry2D.get_closest_point_to_segment(a1, b1, b2))
+	best = minf(best, a2.distance_to(Geometry2D.get_closest_point_to_segment(a2, b1, b2)))
+	best = minf(best, b1.distance_to(Geometry2D.get_closest_point_to_segment(b1, a1, a2)))
+	best = minf(best, b2.distance_to(Geometry2D.get_closest_point_to_segment(b2, a1, a2)))
+	return best
 
 # Procura um corrimão perto da moto e engata se as condições forem boas
 func _try_start_grind(delta: float) -> void:
 	_grind_cooldown_left = maxf(_grind_cooldown_left - delta, 0.0)
-	if not grind_enabled or _grind_cooldown_left > 0.0:
+	if not grind_enabled or _grind_cooldown_left > 0.0 or _grind_exit_left > 0.0:
 		return
 	if grind_needs_air and not _in_air:
 		return
-
-	var speed = linear_velocity.length()
-	if speed < grind_min_speed:
+	if linear_velocity.y > grind_max_rise_speed:
 		return
 
-	# A = esquerda, D = direita
-	var turn = 0.0
-	if Input.is_key_pressed(KEY_A):
-		turn += 1.0
-	if Input.is_key_pressed(KEY_D):
-		turn -= 1.0
-	if grind_needs_turn_key and turn == 0.0:
+	# Só engata com a moto numa inclinação aceitável:
+	# X = nariz para cima/baixo, Z = inclinada de lado (a direção para onde ela olha, Y, não importa)
+	var tilt = global_transform.basis.orthonormalized().get_euler()
+	var pitch_deg = rad_to_deg(tilt.x)
+	var roll_deg = rad_to_deg(tilt.z)
+	if absf(pitch_deg) > grind_max_pitch_deg or absf(roll_deg) > grind_max_roll_deg:
 		return
 
-	# Lado da moto para onde o jogador virou (A = esquerda da moto, D = direita)
-	var side = -global_transform.basis.x * turn
-	var facing_dir = -global_transform.basis.z
+	var velocity2 = Vector2(linear_velocity.x, linear_velocity.z)
+	var speed_h = velocity2.length()
+	if speed_h < grind_min_speed:
+		return
+
+	# Linha reta que sai da frente e de trás da moto (no plano horizontal)
+	var forward3 = -global_transform.basis.z
+	var forward2 = Vector2(forward3.x, forward3.z)
+	if forward2.length() < 0.2:
+		return   # moto muito empinada/de nariz para baixo: sem direção horizontal confiável
+	forward2 = forward2.normalized()
+	var position2 = Vector2(global_position.x, global_position.z)
+	var probe_rear = position2 - forward2 * grind_probe_length
+	var probe_front = position2 + forward2 * grind_probe_length
+	var end_zone_slope = tan(deg_to_rad(clampf(grind_end_zone_angle_deg, 1.0, 85.0)))
 
 	for rail in get_tree().get_nodes_in_group("grind_rail"):
 		if not rail.has_method("get_start"):
@@ -418,44 +467,158 @@ func _try_start_grind(delta: float) -> void:
 
 		var rail_start: Vector3 = rail.get_start()
 		var rail_end: Vector3 = rail.get_end()
+		var start2 = Vector2(rail_start.x, rail_start.z)
+		var end2 = Vector2(rail_end.x, rail_end.z)
+		var rail_len2 = start2.distance_to(end2)
+		if rail_len2 < 0.5:
+			continue   # corrimão praticamente vertical
+		var axis2 = (end2 - start2) / rail_len2
+
+		var half_width = 0.25
+		if rail.has_method("get_half_width"):
+			half_width = rail.get_half_width()
+
+		# Altura da moto em relação ao corrimão (por cima, e não muito alto)
 		var closest = Geometry3D.get_closest_point_to_segment(global_position, rail_start, rail_end)
-
-		# Distância horizontal (de lado) e altura acima da linha do corrimão
-		var offset = global_position - closest
-		var horizontal_dist = Vector2(offset.x, offset.z).length()
-		if horizontal_dist > grind_grab_distance:
-			continue
-		if offset.y < -0.2 or offset.y > grind_grab_height:
+		var height = global_position.y - closest.y
+		if height < -0.2 or height > grind_grab_height:
 			continue
 
-		var direction = (rail_end - rail_start).normalized()
-		var way = 1.0
+		# 1) A linha da frente ou de trás da moto precisa tocar o corrimão
+		var touch = _segment_distance_2d(probe_rear, probe_front, start2, end2)
+		if touch > half_width + grind_probe_tolerance:
+			continue
 
-		if turn != 0.0 and absf(side.dot(direction)) > 0.3:
-			# Apertou A/D: vai para a ponta do corrimão que está do lado em que virou
-			way = signf(side.dot(direction))
-		else:
-			var along = linear_velocity.dot(direction)
-			if absf(along) / speed >= grind_min_align:
-				# Vindo na direção do corrimão: segue no sentido do movimento
-				way = signf(along)
-			elif grind_auto_engage:
-				# Cruzando de lado: escolhe o sentido para onde a frente da moto aponta
-				var facing = facing_dir.dot(direction)
-				var pick = facing if absf(facing) > 0.1 else along
-				way = signf(pick) if pick != 0.0 else 1.0
-			else:
+		# 2) A moto precisa estar indo em direção ao corrimão (ou já em cima dele)
+		var near_point = Geometry2D.get_closest_point_to_segment(position2, start2, end2)
+		var to_rail = near_point - position2
+		if grind_must_approach and to_rail.length() > 0.5:
+			if velocity2.dot(to_rail.normalized()) <= 0.0:
 				continue
 
-		_start_grind(rail, rail_start, closest, direction, way)
-		return
+		# 3) Em qual zona a moto está?
+		var relative = position2 - (start2 + end2) * 0.5
+		var along = relative.dot(axis2)
+		var lateral = absf(relative.dot(Vector2(-axis2.y, axis2.x)))
+		var beyond = absf(along) - rail_len2 * 0.5
+		var zone = ""
+		var zone_distance = 0.0
+		if beyond > 0.0 and lateral <= half_width + beyond * end_zone_slope:
+			# Zona AZUL (pontas): só importa a distância do centro da moto até a ponta
+			var near_end = end2 if along > 0.0 else start2
+			zone_distance = position2.distance_to(near_end)
+			if zone_distance > grind_end_distance:
+				continue
+			zone = "AZUL (ponta)"
+		else:
+			# Zona LARANJA (lados): distância do centro da moto até o corrimão
+			zone_distance = to_rail.length()
+			if zone_distance > grind_side_distance:
+				continue
+			zone = "LARANJA (lado)"
 
-func _start_grind(rail: Node3D, rail_start: Vector3, closest: Vector3, direction: Vector3, way: float) -> void:
+		# Sentido do deslize: o do movimento; se a moto vem de lado, vai para a ponta mais distante
+		var along_speed = velocity2.dot(axis2)
+		var way = 1.0
+		if absf(along_speed) >= speed_h * 0.3:
+			way = signf(along_speed)
+		elif along != 0.0:
+			way = -signf(along)
+
+		var direction = (rail_end - rail_start).normalized()
+		if _start_grind(rail, rail_start, closest, direction, way):
+			if grind_debug:
+				print("GRIND: zona ", zone, " | distancia=", snappedf(zone_distance, 0.1), " | toque=", snappedf(touch, 0.01), " | altura=", snappedf(height, 0.1), " | queda=", snappedf(_grind_cap_duration, 0.01), "s", " | X=", roundi(pitch_deg), " Z=", roundi(roll_deg))
+			return
+
+# Tenta engatar. Devolve false (sem mudar nada) se o pouso previsto não cair dentro do corrimão.
+func _start_grind(rail: Node3D, rail_start: Vector3, closest: Vector3, direction: Vector3, way: float) -> bool:
+	var rail_end: Vector3 = rail.get_end()
+	var rail_length = rail_start.distance_to(rail_end)
+	var axis2 = Vector2(direction.x, direction.z)
+	if axis2.length() < 0.01:
+		return false
+	axis2 = axis2.normalized()
+
+	var slide_dir = direction * way
+	var entry_velocity = linear_velocity
+	var horizontal_speed = maxf(Vector2(entry_velocity.x, entry_velocity.z).length(), grind_min_speed)
+
+	# Escolhe qual lado da moto fica virado para a frente do deslize.
+	# A / D = escolhem o lado | sem tecla = o lado que pede o giro mais curto.
+	var perp = slide_dir.cross(Vector3.UP)
+	var turn = 0.0
+	if Input.is_key_pressed(KEY_A):
+		turn += 1.0
+	if Input.is_key_pressed(KEY_D):
+		turn -= 1.0
+	var side = 1.0
+	if turn != 0.0:
+		var wanted = -global_transform.basis.x * turn
+		side = 1.0 if perp.dot(wanted) >= 0.0 else -1.0
+	else:
+		var current_forward = -global_transform.basis.z
+		side = 1.0 if perp.dot(current_forward) >= 0.0 else -1.0
+	_grind_slide_dir = slide_dir
+	_grind_side = side
+
+	var target_basis = _grind_target_basis()
+
+	# Quanto tempo a moto levaria para chegar à altura do corrimão? (queda natural)
+	var gravity = maxf(float(ProjectSettings.get_setting("physics/3d/default_gravity")) * _gravity_scale_base, 0.1)
+	var y_start = global_position.y
+	var y_land = closest.y + target_basis.y.y * grind_height
+	var vy = entry_velocity.y
+	var ballistic = false
+	var duration = maxf(grind_min_time, 0.1)
+	if y_start > y_land + 0.05:
+		var fall_time = (vy + sqrt(vy * vy + 2.0 * gravity * (y_start - y_land))) / gravity
+		if fall_time > grind_max_approach_time:
+			return false   # alto demais: ainda não dá para engatar
+		if fall_time >= grind_min_time:
+			ballistic = true
+			duration = fall_time
+
+	# Onde ela vai pousar no corrimão: anda na horizontal à mesma velocidade durante a queda
+	var from_start = Vector2(global_position.x - rail_start.x, global_position.z - rail_start.z)
+	var lateral = absf(from_start.dot(Vector2(-axis2.y, axis2.x)))
+	var along_now = (global_position - rail_start).dot(direction)
+	var margin = minf(grind_land_margin, rail_length * 0.25)
+	var travel = horizontal_speed * duration
+	var along_travel = maxf(sqrt(maxf(travel * travel - lateral * lateral, 0.0)), 0.5)
+	var land_s = along_now + way * along_travel
+
+	if land_s < margin or land_s > rail_length - margin:
+		if ballistic:
+			return false   # a queda natural passaria do corrimão: espera ficar mais baixo
+		# Entrada rápida e sem queda: encurta o tempo para ainda caber no corrimão
+		var room = (rail_length - margin - along_now) if way > 0.0 else (along_now - margin)
+		if room < 0.3:
+			return false
+		duration = sqrt(room * room + lateral * lateral) / horizontal_speed
+		if duration < 0.12:
+			return false
+		land_s = along_now + way * room
+	land_s = clampf(land_s, margin, maxf(rail_length - margin, margin))
+
+	# Tudo certo: engata
 	_grinding = true
 	_grind_rail = rail
 	_grind_way = way
-	_grind_s = (closest - rail_start).dot(direction)
-	_grind_speed = clampf(linear_velocity.length(), grind_min_speed, _effective_max_speed())
+	_grind_speed = horizontal_speed   # a velocidade horizontal se mantém no corrimão
+
+	_grind_land_s = land_s
+	_grind_cap_p0 = global_position
+	_grind_cap_v0 = entry_velocity
+	_grind_cap_land = rail_start + direction * land_s + target_basis.y * grind_height
+	var slide_flat = Vector2(slide_dir.x, slide_dir.z).normalized()
+	_grind_cap_v1h = slide_flat * horizontal_speed
+	_grind_cap_duration = duration
+	_grind_cap_time = 0.0
+	_grind_cap_ballistic = ballistic
+	_grind_cap_gravity = gravity
+	_grind_start_quat = Quaternion(global_transform.basis.orthonormalized())
+	_grind_capturing = true
 
 	_end_drift(false)
 	_boost_time_left = 0.0
@@ -471,6 +634,12 @@ func _start_grind(rail: Node3D, rail_start: Vector3, closest: Vector3, direction
 	_air_scoring = false
 	if _combo_active:
 		_combo_timer = combo_timeout
+	return true
+
+# Orientação da moto no corrimão: de lado (perpendicular à direção do deslize), estilo skate
+func _grind_target_basis() -> Basis:
+	var perp = _grind_slide_dir.cross(Vector3.UP).normalized() * _grind_side
+	return Basis.looking_at(perp, Vector3.UP)
 
 # Roda a cada quadro enquanto a moto está no corrimão
 func _process_grind(delta: float) -> void:
@@ -482,25 +651,62 @@ func _process_grind(delta: float) -> void:
 	var rail_end: Vector3 = _grind_rail.get_end()
 	var rail_length = rail_start.distance_to(rail_end)
 	var direction = (rail_end - rail_start).normalized()
+	_grind_slide_dir = direction * _grind_way
 
-	# Anda pelo corrimão (nunca fica mais lenta que 1 m/s, para sempre chegar ao fim)
+	# Velocidade do deslize (só perde se grind_friction for maior que zero)
 	_grind_speed = maxf(_grind_speed - grind_friction * delta, 1.0)
-	_grind_s += _grind_way * _grind_speed * delta
-	var finished = _grind_s <= 0.0 or _grind_s >= rail_length
-	_grind_s = clampf(_grind_s, 0.0, rail_length)
 
-	# Posição e direção alvo: em cima do corrimão, olhando para onde ele vai
-	var forward = direction * _grind_way
-	var target_basis = Basis.looking_at(forward, Vector3.UP)
-	var rail_point = rail_start + direction * _grind_s
-	var target_position = rail_point + target_basis.y * grind_height
+	var old_position = global_position
+	var target_basis = _grind_target_basis()
+	var new_basis = target_basis
+	var new_position = old_position
+	var finished = false
 
-	# "Gruda" suavemente (no começo da moto engatar não dá um tranco)
-	var blend = clampf(grind_snap_speed * delta, 0.0, 1.0)
-	var new_basis = global_transform.basis.orthonormalized().slerp(target_basis, blend)
-	global_transform = Transform3D(new_basis, global_position.lerp(target_position, blend))
+	if _grind_capturing:
+		# Queda natural até o corrimão. O giro e o ajuste horizontal levam o MESMO tempo da queda.
+		_grind_cap_time += delta
+		var total = maxf(_grind_cap_duration, 0.05)
+		var t = minf(_grind_cap_time, total)
+		var u = t / total
+		var u2 = u * u
+		var u3 = u2 * u
 
-	linear_velocity = forward * _grind_speed
+		# Horizontal: curva (Hermite) que sai com a velocidade que a moto já tinha
+		# e chega com a velocidade do deslize, sem tranco nas duas pontas
+		var p0h = Vector2(_grind_cap_p0.x, _grind_cap_p0.z)
+		var v0h = Vector2(_grind_cap_v0.x, _grind_cap_v0.z)
+		var p1h = Vector2(_grind_cap_land.x, _grind_cap_land.z)
+		var position_h = p0h * (2.0 * u3 - 3.0 * u2 + 1.0) + v0h * (total * (u3 - 2.0 * u2 + u)) + p1h * (-2.0 * u3 + 3.0 * u2) + _grind_cap_v1h * (total * (u3 - u2))
+
+		# Vertical: queda com a gravidade normal (ou um ajuste suave se a moto já está na altura)
+		var y = _grind_cap_land.y
+		if u < 1.0:
+			if _grind_cap_ballistic:
+				y = _grind_cap_p0.y + _grind_cap_v0.y * t - 0.5 * _grind_cap_gravity * t * t
+			else:
+				y = lerpf(_grind_cap_p0.y, _grind_cap_land.y, u * u * (3.0 - 2.0 * u))
+		new_position = Vector3(position_h.x, y, position_h.y)
+
+		# Giro de lado: começa e termina suave, durante toda a queda
+		var rotation_weight = u * u * (3.0 - 2.0 * u)
+		new_basis = Basis(_grind_start_quat.slerp(Quaternion(target_basis), rotation_weight))
+
+		if _grind_cap_time >= total:
+			_grind_capturing = false
+			_grind_s = _grind_land_s
+	else:
+		# Deslize ao longo do corrimão
+		_grind_s += _grind_way * _grind_speed * delta
+		finished = _grind_s <= 0.0 or _grind_s >= rail_length
+		_grind_s = clampf(_grind_s, 0.0, rail_length)
+		new_position = rail_start + direction * _grind_s + target_basis.y * grind_height
+
+	global_transform = Transform3D(new_basis, new_position)
+
+	if _grind_capturing:
+		linear_velocity = (new_position - old_position) / maxf(delta, 0.0001)
+	else:
+		linear_velocity = _grind_slide_dir * _grind_speed
 	angular_velocity = Vector3.ZERO
 	engine_force = 0.0
 	brake = 0.0
@@ -518,22 +724,45 @@ func _process_grind(delta: float) -> void:
 	if finished:
 		_end_grind(false)
 
-# Sai do corrimão e devolve a física normal, mantendo a velocidade e a direção
+# Sai do corrimão: devolve a física normal e começa a girar a moto de volta para a frente
 func _end_grind(with_jump: bool) -> void:
 	if not _grinding:
 		return
 
 	_grinding = false
+	_grind_capturing = false
 	_grind_rail = null
 	_grind_cooldown_left = grind_cooldown
 	gravity_scale = _gravity_scale_base
 
-	linear_velocity = -global_transform.basis.z * _grind_speed
+	var flat = Vector3(_grind_slide_dir.x, 0.0, _grind_slide_dir.z)
+	if flat.length() < 0.01:
+		flat = -global_transform.basis.z
+	flat = flat.normalized()
+
+	linear_velocity = _grind_slide_dir * _grind_speed
 	angular_velocity = Vector3.ZERO
 	_last_velocity = linear_velocity
 
+	# Giro de volta para a direção do movimento (controle do ar fica travado nesse tempo)
+	_grind_exit_left = grind_exit_time
+	_grind_exit_from = Quaternion(global_transform.basis.orthonormalized())
+	_grind_exit_to = Quaternion(Basis.looking_at(flat, Vector3.UP))
+
 	if with_jump:
 		_do_jump()
+
+# Gira a moto suavemente de volta para a frente depois de sair do corrimão
+func _update_grind_exit(delta: float) -> void:
+	if _grinding or _grind_exit_left <= 0.0:
+		return
+
+	_grind_exit_left = maxf(_grind_exit_left - delta, 0.0)
+	var k = 1.0 - _grind_exit_left / maxf(grind_exit_time, 0.05)
+	var weight = k * k * (3.0 - 2.0 * k)
+	var new_basis = Basis(_grind_exit_from.slerp(_grind_exit_to, weight))
+	global_transform = Transform3D(new_basis, global_position)
+	angular_velocity = Vector3.ZERO
 
 # ------------------------------------------------------------------
 # Pontuação de manobras (estilo Tony Hawk / Bomb Rush)
@@ -1001,7 +1230,7 @@ func _update_air_state(delta: float) -> void:
 # W/S = inclina o nariz (pitch), Q/E = rola de lado (roll), A/D = gira no próprio eixo (yaw).
 # Controla a velocidade angular direto, então a resposta é firme e previsível.
 func _air_control(delta: float) -> void:
-	if not _in_air:
+	if not _in_air or _grind_exit_left > 0.0:
 		return
 
 	var pitch_in = 0.0
@@ -1227,7 +1456,7 @@ func _update_hud() -> void:
 	if not is_mounted:
 		return
 
-	var speed_kmh = linear_velocity.length() * 3.6
+	var speed_kmh = Vector2(linear_velocity.x, linear_velocity.z).length() * 3.6   # velocidade horizontal (não conta a queda/subida)
 	_speed_label.text = "%d km/h\nmáx: %d km/h  (↑ / ↓)" % [roundi(speed_kmh), roundi(_effective_max_speed() * 3.6)]
 
 	if _grinding:

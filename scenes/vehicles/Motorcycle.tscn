@@ -11,6 +11,7 @@ mass = 43.0
 center_of_mass_mode = 1
 center_of_mass = Vector3(0, 0.2, 0)
 script = ExtResource("1_0602f")
+grind_height = 1.1
 
 [node name="Model" type="Node3D" parent="." unique_id=587915281]
 

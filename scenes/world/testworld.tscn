@@ -65,11 +65,11 @@ transform = Transform3D(23.18222, 6.211657, 0, -6.211657, 23.18222, 0, 0, 0, 24,
 use_collision = true
 
 [node name="CSGBox3D4" type="CSGBox3D" parent="." unique_id=8488354]
-transform = Transform3D(22.951315, 7.0169206, 0, -7.0169206, 22.951315, 0, 0, 0, 24, 36.66479, -0.65111834, 22.771)
+transform = Transform3D(22.951315, 7.0169206, 0, -7.0169206, 22.951315, 0, 0, 0, 24, 17.635601, -0.65111834, 22.771)
 use_collision = true
 size = Vector3(0.20043945, 0.08532715, 0.038085938)
 
 [node name="Corrimão" type="CSGBox3D" parent="." unique_id=847175763]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.920166, 0.5, 22.770538)
-size = Vector3(56.523926, 1, 0.50097656)
+size = Vector3(13.688, 1, 0.501)
 script = ExtResource("7_ici0x")
