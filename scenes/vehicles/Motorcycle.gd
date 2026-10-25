@@ -19,8 +19,8 @@ extends VehicleBody3D
 # e perdido se pousar muito torto.
 
 @export_group("Força do Veículo")
-@export var max_engine_force: float = 500.0
-@export var max_speed: float = 40.0           # m/s (40 m/s = 144 km/h)
+@export var max_engine_force: float = 600.0
+@export var max_speed: float = 70.0           # m/s (40 m/s = 144 km/h)
 @export var brake_strength: float = 6.0       # força máxima do freio (sobe aos poucos)
 @export var brake_ramp_time: float = 0.7      # segundos até o freio chegar na força máxima
 @export var idle_brake: float = 0.4           # freio-motor ao soltar o acelerador
