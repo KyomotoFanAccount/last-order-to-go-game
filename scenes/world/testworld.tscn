@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://cu1ulfq3ad00m" path="res://scenes/world/csg_box_3d_3.gd" id="7_ici0x"]
 [ext_resource type="PackedScene" uid="uid://dgawalvy642em" path="res://scenes/player/Player.tscn" id="7_iivpr"]
 [ext_resource type="PackedScene" uid="uid://blc0cfgtyf6au" path="res://scenes/vehicles/Motorcycle.tscn" id="8_ici0x"]
+[ext_resource type="PackedScene" uid="uid://cqrcij5ergith" path="res://scenes/moto_nova/moto_nova.tscn" id="8_va6hb"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_xrivr"]
 size = Vector3(116.628815, 1, 118.00148)
@@ -73,3 +74,9 @@ size = Vector3(0.20043945, 0.08532715, 0.038085938)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.920166, 0.5, 22.770538)
 size = Vector3(13.688, 1, 0.501)
 script = ExtResource("7_ici0x")
+
+[node name="moto_nova" parent="." unique_id=553754760 instance=ExtResource("8_va6hb")]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 18.809723, -0.07205129, 28.521358)
+
+[node name="Motorcycle5" parent="." unique_id=581364650 instance=ExtResource("8_ici0x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.449938, 1.383354, 19.630068)
