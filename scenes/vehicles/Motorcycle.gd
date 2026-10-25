@@ -29,16 +29,16 @@ extends VehicleBody3D
 @export var reverse_force_mult: float = 1.0   # força do motor na ré (1 = igual à frente)
 @export var reverse_accel: float = 6.0        # m/s²: empurrão extra direto para trás
 
-@export_group("Direção (estilo GTA)")
+@export_group("Direção")
 @export var max_steer_deg: float = 45.0       # ângulo máximo da roda em baixa velocidade
 @export var steer_speed: float = 3.0          # rad/s: rapidez com que o guidão vira
 @export var steer_multiplier: float = 1.0     # multiplica o ângulo real da roda em todas as velocidades (1 = como está)
 @export var steer_hard_limit_deg: float = 60.0 # trava de segurança: o ângulo real nunca passa disso
 @export var lateral_accel_low: float = 7.0    # m/s² de força lateral em baixa velocidade (pouca inclinação)
-@export var lateral_accel_high: float = 25.0  # m/s² na velocidade de referência (muita inclinação)
+@export var lateral_accel_high: float = 45.0  # m/s² na velocidade de referência (muita inclinação)
 @export var handling_ref_speed: float = 40.0  # m/s: referência do grip (não muda com o max_speed)
 @export var yaw_response: float = 22.0        # quão rápido a moto acompanha a curva
-@export var lateral_grip: float = 6.0         # quanto maior, menos a moto escorrega de lado
+@export var lateral_grip: float = 10.0         # quanto maior, menos a moto escorrega de lado
 
 @export_group("Inclinação nas Curvas (visual)")
 @export var lean_enabled: bool = true
