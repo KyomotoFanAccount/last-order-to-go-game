@@ -1,24 +1,16 @@
 extends CanvasLayer
 # HUD do zFood (autoload "ZFoodHUD").
-#   [P] abre / fecha o app (o mouse aparece enquanto o app está aberto)
+#   [P] abre / fecha o celular (o mouse aparece enquanto o celular está aberto)
 #   Painel embaixo à esquerda: pedido ativo, destino, distância, prazo e integridade da comida
 #   Embaixo no centro: dinheiro, nota do entregador e a dica da tecla
 #   Ao concluir: resumo da entrega com pagamento, gorjeta e a avaliação do cliente
+# O celular em si (apps, botões, calculadora...) está em phone_ui.gd.
 
 const OPEN_KEY: Key = KEY_P
-const COLOR_ACCENT: Color = Color(1.0, 0.4, 0.2)   # cor do zFood
 const RESULT_SECONDS: float = 8.0                  # tempo que o resumo da entrega fica na tela
 
-var _app_open: bool = false
+var _phone: PhoneUI
 var _previous_mouse_mode: Input.MouseMode = Input.MOUSE_MODE_VISIBLE
-
-# App
-var _app_panel: PanelContainer
-var _app_subtitle: Label
-var _app_rating: Label
-var _offers_box: VBoxContainer
-var _refresh_button: Button
-var _cancel_button: Button
 
 # HUD do pedido ativo
 var _order_panel: PanelContainer
@@ -47,42 +39,36 @@ func _ready() -> void:
 	layer = 10
 	_build_hud()
 	_build_result()
-	_build_app()
 
-	DeliveryManager.offers_changed.connect(_refresh_app)
+	_phone = PhoneUI.new()
+	add_child(_phone)
+	_phone.closed.connect(_on_phone_closed)
+
 	DeliveryManager.order_accepted.connect(_on_order_accepted)
 	DeliveryManager.order_picked_up.connect(_on_order_picked_up)
 	DeliveryManager.order_completed.connect(_on_order_completed)
 	DeliveryManager.order_cancelled.connect(_on_order_cancelled)
 	DeliveryManager.integrity_damaged.connect(_on_integrity_damaged)
 
-	_refresh_app()
-
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == OPEN_KEY:
-		if _app_open:
-			_close_app()
+		if _phone.is_open:
+			_phone.close_phone()
 		else:
-			_open_app()
+			_open_phone()
 		get_viewport().set_input_as_handled()
 
 # ------------------------------------------------------------------
-# Abrir / fechar o app
+# Abrir / fechar o celular
 # ------------------------------------------------------------------
 
-func _open_app() -> void:
-	_app_open = true
+func _open_phone() -> void:
 	_previous_mouse_mode = Input.mouse_mode
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE   # o mouse aparece para você clicar no celular
+	_phone.open_phone()
 
-	if not DeliveryManager.is_busy() and DeliveryManager.offers.is_empty():
-		DeliveryManager.generate_offers()
-	_refresh_app()
-	_app_panel.visible = true
-
-func _close_app() -> void:
-	_app_open = false
-	_app_panel.visible = false
+# O celular avisa quando fecha (pela tecla P ou pelo botão voltar): devolve o mouse ao jogo
+func _on_phone_closed() -> void:
 	if _previous_mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -200,112 +186,9 @@ func _build_result() -> void:
 	box.add_child(_result_stars)
 	box.add_child(_result_comment)
 
-func _build_app() -> void:
-	_app_panel = PanelContainer.new()
-	_app_panel.add_theme_stylebox_override("panel", _make_style(Color(0.1, 0.1, 0.13, 0.97), 22))
-	_app_panel.anchor_left = 0.5
-	_app_panel.anchor_right = 0.5
-	_app_panel.anchor_top = 0.5
-	_app_panel.anchor_bottom = 0.5
-	_app_panel.offset_left = -300.0
-	_app_panel.offset_right = 300.0
-	_app_panel.offset_top = -300.0
-	_app_panel.offset_bottom = 300.0
-	_app_panel.visible = false
-	add_child(_app_panel)
-
-	var root = VBoxContainer.new()
-	root.add_theme_constant_override("separation", 12)
-	_app_panel.add_child(root)
-
-	root.add_child(_make_label(46, COLOR_ACCENT, "zFood"))
-	_app_rating = _make_label(20, Color(1.0, 0.85, 0.2))
-	root.add_child(_app_rating)
-	_app_subtitle = _make_label(20, Color(0.7, 0.7, 0.75), "Pedidos disponíveis")
-	root.add_child(_app_subtitle)
-
-	_offers_box = VBoxContainer.new()
-	_offers_box.add_theme_constant_override("separation", 10)
-	_offers_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(_offers_box)
-
-	var buttons = HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 10)
-	root.add_child(buttons)
-
-	_refresh_button = _make_button("Atualizar pedidos")
-	_refresh_button.pressed.connect(_on_refresh_pressed)
-	buttons.add_child(_refresh_button)
-
-	_cancel_button = _make_button("Cancelar entrega")
-	_cancel_button.pressed.connect(_on_cancel_pressed)
-	buttons.add_child(_cancel_button)
-
-	var close_button = _make_button("Fechar [P]")
-	close_button.pressed.connect(_close_app)
-	buttons.add_child(close_button)
-
-# Reconstrói a lista de pedidos do app
-func _refresh_app() -> void:
-	if _offers_box == null:
-		return
-
-	for child in _offers_box.get_children():
-		_offers_box.remove_child(child)
-		child.queue_free()
-
-	_app_rating.text = _rating_text()
-
-	if DeliveryManager.is_busy():
-		_app_subtitle.text = "Você tem uma entrega em andamento"
-		_offers_box.add_child(_make_label(22, Color.WHITE, "Termine a entrega atual (ou cancele) para ver novos pedidos."))
-	else:
-		_app_subtitle.text = "Pedidos disponíveis"
-		if DeliveryManager.offers.is_empty():
-			_offers_box.add_child(_make_label(22, Color.WHITE, "Nenhum pedido agora. Toque em Atualizar."))
-		for order in DeliveryManager.offers:
-			_offers_box.add_child(_make_offer_card(order))
-
-	_refresh_button.disabled = DeliveryManager.is_busy()
-	_cancel_button.visible = DeliveryManager.is_busy()
-
-func _make_offer_card(order: Dictionary) -> Control:
-	var card = PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _make_style(Color(0.17, 0.17, 0.21), 14))
-
-	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
-	card.add_child(row)
-
-	var info = VBoxContainer.new()
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(info)
-
-	info.add_child(_make_label(24, Color.WHITE, "%s  •  R$ %.2f" % [order["food"], order["reward"]]))
-	info.add_child(_make_label(18, Color(0.8, 0.8, 0.85), "Retirar: %s" % order["pickup_name"]))
-	info.add_child(_make_label(18, Color(0.8, 0.8, 0.85), "Entregar para %s: %s" % [order["customer"], order["dropoff_name"]]))
-	info.add_child(_make_label(18, Color(1.0, 0.85, 0.4), "%d m  •  prazo %s" % [roundi(order["distance"]), _format_time(order["time_limit"])]))
-
-	var accept = _make_button("Aceitar")
-	accept.custom_minimum_size = Vector2(130.0, 0.0)
-	accept.pressed.connect(_on_accept_pressed.bind(order["id"]))
-	row.add_child(accept)
-
-	return card
-
 # ------------------------------------------------------------------
-# Botões e avisos
+# Avisos
 # ------------------------------------------------------------------
-
-func _on_accept_pressed(order_id: int) -> void:
-	DeliveryManager.accept_order(order_id)
-	_close_app()
-
-func _on_refresh_pressed() -> void:
-	DeliveryManager.generate_offers()
-
-func _on_cancel_pressed() -> void:
-	DeliveryManager.cancel_order()
 
 func _on_order_accepted(order: Dictionary) -> void:
 	_show_message("Pedido aceito! Vá até %s" % order["pickup_name"], Color(1.0, 0.8, 0.3))
@@ -363,7 +246,7 @@ func _process(delta: float) -> void:
 	if _result_timer <= 0.0:
 		_result_panel.visible = false
 
-	_hint_label.text = "R$ %.2f   •   %s   •   [P] zFood" % [DeliveryManager.money, _rating_text(true)]
+	_hint_label.text = "R$ %.2f   •   %s   •   [P] celular" % [DeliveryManager.money, _rating_text()]
 
 	var active = DeliveryManager.is_busy()
 	_order_panel.visible = active
@@ -408,16 +291,10 @@ func _process(delta: float) -> void:
 # Utilitários de interface
 # ------------------------------------------------------------------
 
-# Nota do entregador. short = versão curta (para a linha de baixo da tela)
-func _rating_text(short: bool = false) -> String:
+func _rating_text() -> String:
 	if DeliveryManager.rating_count == 0:
-		if short:
-			return "★ --"
-		return "Sua nota: sem avaliações ainda"
-	var average = DeliveryManager.get_rating_average()
-	if short:
-		return "★ %.1f" % average
-	return "Sua nota: ★ %.1f  (%d entregas)" % [average, DeliveryManager.rating_count]
+		return "★ --"
+	return "★ %.1f" % DeliveryManager.get_rating_average()
 
 func _make_style(color: Color, radius: int) -> StyleBoxFlat:
 	var style = StyleBoxFlat.new()
@@ -433,13 +310,6 @@ func _make_label(font_size: int, color: Color, text: String = "") -> Label:
 	label.add_theme_color_override("font_color", color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return label
-
-func _make_button(text: String) -> Button:
-	var button = Button.new()
-	button.text = text
-	button.add_theme_font_size_override("font_size", 22)
-	button.focus_mode = Control.FOCUS_NONE   # evita que Espaço/Enter "apertem" o botão por engano
-	return button
 
 func _format_time(seconds: float) -> String:
 	var total = maxi(roundi(seconds), 0)
