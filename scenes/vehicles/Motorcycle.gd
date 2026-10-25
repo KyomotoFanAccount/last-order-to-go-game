@@ -34,7 +34,7 @@ extends VehicleBody3D
 @export var steer_speed: float = 3.0          # rad/s: rapidez com que o guidão vira
 @export var steer_multiplier: float = 1.0     # multiplica o ângulo real da roda em todas as velocidades (1 = como está)
 @export var steer_hard_limit_deg: float = 60.0 # trava de segurança: o ângulo real nunca passa disso
-@export var lateral_accel_low: float = 7.0    # m/s² de força lateral em baixa velocidade (pouca inclinação)
+@export var lateral_accel_low: float = 5.5    # m/s² de força lateral em baixa velocidade (pouca inclinação)
 @export var lateral_accel_high: float = 45.0  # m/s² na velocidade de referência (muita inclinação)
 @export var handling_ref_speed: float = 40.0  # m/s: referência do grip (não muda com o max_speed)
 @export var yaw_response: float = 22.0        # quão rápido a moto acompanha a curva
@@ -94,7 +94,7 @@ extends VehicleBody3D
 @export var grind_allow_jump_exit: bool = false  # true = dá para sair do corrimão pulando (C); false = só sai no fim
 @export var grind_points_per_sec: float = 200.0  # pontos por segundo de grind (entra no combo)
 
-@export_group("Drift (estilo Mario Kart)")
+@export_group("Drift")
 @export var drift_enabled: bool = true
 @export var drift_min_speed: float = 8.0      # m/s (≈ 29 km/h) para poder entrar no drift
 @export var drift_turn_boost: float = 2.4     # curva mais fechada durante o drift
@@ -121,13 +121,13 @@ extends VehicleBody3D
 @export var visual_steer_axis: Vector3 = Vector3.UP # eixo de giro (local do nó)
 @export var visual_invert: bool = false           # marque se o garfo girar para o lado errado
 
-@export_group("Controle no Ar (estilo GTA)")
+@export_group("Controle no Ar")
 @export var air_min_time: float = 0.15        # s no ar antes de liberar o controle (evita ativar em trepidação)
 @export var air_pitch_speed: float = 4.5      # rad/s: W/S inclinam o nariz
-@export var air_roll_speed: float = 4.5       # rad/s: Q/E rolam a moto de lado
+@export var air_roll_speed: float = 5.5       # rad/s: Q/E rolam a moto de lado
 @export var air_yaw_speed: float = 4.5        # rad/s: A/D giram a moto no próprio eixo (vertical)
 @export var air_accel: float = 14.0           # rad/s²: rapidez para atingir a rotação desejada
-@export var air_brake: float = 3.0            # rad/s²: quanto a rotação freia sozinha sem input (0 = gira para sempre)
+@export var air_brake: float = 1.5            # rad/s²: quanto a rotação freia sozinha sem input (0 = gira para sempre)
 @export var ground_level_speed: float = 8.0   # quão rápido a moto se endireita ao pousar
 @export var ground_level_max: float = 6.0     # rad/s: limite dessa correção
 
@@ -157,7 +157,7 @@ extends VehicleBody3D
 @export var lose_combo_on_bad_landing: bool = true # true = pousar muito torto perde o combo
 @export var bad_landing_up_dot: float = 0.5       # 1 = reto, 0 = de lado; abaixo disso é pouso ruim
 
-@export_group("Colisão (suave, estilo Burnout/GTA)")
+@export_group("Colisão")
 @export var wall_slide_friction: float = 0.05 # fricção do corpo (baixa = desliza na parede em vez de grudar)
 @export var wall_push_accel: float = 3.0      # m/s²: empurrãozinho para longe da parede (0 = desligado)
 @export var hit_min_impact: float = 5.0       # batidas mais fracas que isso não fazem tremer a câmera
