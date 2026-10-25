@@ -14,6 +14,11 @@ config/name="Novo Projeto de Jogo"
 run/main_scene="uid://dgawalvy642em"
 config/features=PackedStringArray("4.7", "Forward Plus")
 
+[autoload]
+
+DeliveryManager="*uid://dwqvjkf4xr2gw"
+ZfoodHud="*uid://s76y8uutg6qt"
+
 [display]
 
 window/stretch/mode="canvas_items"

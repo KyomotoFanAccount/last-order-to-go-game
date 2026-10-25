@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://b7exsghe1x22u" path="res://assets/vehicles/motountitled1.fbx" id="2_0602f"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_moto"]
-size = Vector3(0.8, 1, 2.515625)
+size = Vector3(0.8, 1, 2.7062988)
 
 [node name="Motorcycle" type="VehicleBody3D" unique_id=1462046149]
 mass = 43.0
@@ -13,7 +13,7 @@ center_of_mass = Vector3(0, 0.2, 0)
 script = ExtResource("1_0602f")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=366144138]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5377784, 0.003)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5377784, -0.12480761)
 shape = SubResource("BoxShape3D_moto")
 
 [node name="CameraRig" type="Node3D" parent="." unique_id=342599493]

@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://dgawalvy642em" path="res://scenes/player/Player.tscn" id="7_iivpr"]
 [ext_resource type="PackedScene" uid="uid://blc0cfgtyf6au" path="res://scenes/vehicles/Motorcycle.tscn" id="8_ici0x"]
 [ext_resource type="PackedScene" uid="uid://cqrcij5ergith" path="res://scenes/moto_nova/moto_nova.tscn" id="8_va6hb"]
+[ext_resource type="Script" uid="uid://cltjfa161gped" path="res://delivery/delivery_point.gd" id="9_va6hb"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_xrivr"]
 size = Vector3(116.628815, 1, 118.00148)
@@ -58,11 +59,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.639997, 0.08084459, 18.407
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.947016, 0.08084411, 9.046508)
 
 [node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=22344603]
-transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 2.3821688, 0)
+transform = Transform3D(3.8479624, 0, -4.6036053, 0, 6, 0, 4.6036053, 0, 3.8479624, -11.978378, 2.3821688, -19.002045)
 use_collision = true
 
 [node name="CSGBox3D2" type="CSGBox3D" parent="." unique_id=341949672]
-transform = Transform3D(23.18222, 6.211657, 0, -6.211657, 23.18222, 0, 0, 0, 24, 11.3698845, -9.286296, -0.06140709)
+transform = Transform3D(14.777463, 3.9596093, -18.491837, -6.2116566, 23.182219, 0, 17.861742, 4.7860394, 15.298756, 1.1269531, -9.1472845, -15.401951)
 use_collision = true
 
 [node name="CSGBox3D4" type="CSGBox3D" parent="." unique_id=8488354]
@@ -80,3 +81,30 @@ transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 18.809723, -0.07205129,
 
 [node name="Motorcycle5" parent="." unique_id=581364650 instance=ExtResource("8_ici0x")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.449938, 1.383354, 19.630068)
+
+[node name="Restaurante_Napoli" type="CSGBox3D" parent="." unique_id=905901616]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 3, -40)
+size = Vector3(8, 6, 8)
+script = ExtResource("9_va6hb")
+kind = 0
+
+[node name="Restaurante_BurgerZ" type="CSGBox3D" parent="." unique_id=1715518999]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 3, -40)
+size = Vector3(8, 6, 8)
+script = ExtResource("9_va6hb")
+kind = 0
+
+[node name="Casa_da_Ana" type="CSGBox3D" parent="." unique_id=1746030955]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 2.5, 40)
+size = Vector3(6, 5, 6)
+script = ExtResource("9_va6hb")
+
+[node name="Casa_da_Bruno" type="CSGBox3D" parent="." unique_id=1576041203]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 45)
+size = Vector3(6, 5, 6)
+script = ExtResource("9_va6hb")
+
+[node name="Casa_da_Carla" type="CSGBox3D" parent="." unique_id=699620618]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 2.5, 40)
+size = Vector3(6, 5, 6)
+script = ExtResource("9_va6hb")
