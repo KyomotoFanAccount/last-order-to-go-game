@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://cqrcij5ergith"]
+
+[ext_resource type="PackedScene" uid="uid://b7exsghe1x22u" path="res://assets/vehicles/motountitled1.fbx" id="1_7ykdc"]
+
+[node name="motountitled1" unique_id=553754760 instance=ExtResource("1_7ykdc")]
+
+[node name="Skeleton3D" parent="Armature" parent_id_path=PackedInt32Array(1529903123) index="0" unique_id=1832252666]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2162512e-17, -0.11170578, -0.051992178)
+
+[node name="RodaFrontal" type="VehicleWheel3D" parent="." index="1" unique_id=394193390]
+transform = Transform3D(-4, 0, -6.039832e-07, 0, 4, 0, 6.039832e-07, 0, -4, 0, 1.933, -4.1363177)
+use_as_steering = true
+
+[node name="RodaTraseira" type="VehicleWheel3D" parent="." index="2" unique_id=1600565918]
+transform = Transform3D(-4, 0, 6.039832e-07, 0, 4, 0, -6.039832e-07, 0, -4, 0, 1.9325597, 5.186029)
+engine_force = 103.14
+brake = 28.83
+use_as_traction = true
+
+[node name="CameraRig" type="Node3D" parent="." index="3" unique_id=835860941]
+transform = Transform3D(-1, 8.379101e-09, -8.702029e-08, 0, 0.99539614, 0.095845744, 8.742278e-08, 0.095845744, -0.99539614, 0, 7.8040504, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig" index="0" unique_id=463184053]
+transform = Transform3D(1, 0, 0, 0, 1.0000001, 2.9802322e-08, 0, -2.9802322e-08, 1.0000001, 0, 0.46277082, 0.081599)
+spring_length = 5.0
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D" index="0" unique_id=2018606200]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+current = true
+
+[node name="DismountPosition" type="Marker3D" parent="." index="4" unique_id=403449087]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+
+[node name="VehicleBody3D" type="VehicleBody3D" parent="." index="5" unique_id=550331907]

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://blc0cfgtyf6au"]
 
 [ext_resource type="Script" uid="uid://cydaitycu724t" path="res://scenes/vehicles/Motorcycle.gd" id="1_0602f"]
-[ext_resource type="PackedScene" uid="uid://ceeuayk58c3my" path="res://assets/vehicles/low-poly_scooter.glb" id="1_scooter"]
+[ext_resource type="PackedScene" uid="uid://b7exsghe1x22u" path="res://assets/vehicles/motountitled1.fbx" id="2_0602f"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_moto"]
 size = Vector3(0.8, 1, 2.515625)
@@ -11,14 +11,9 @@ mass = 43.0
 center_of_mass_mode = 1
 center_of_mass = Vector3(0, 0.2, 0)
 script = ExtResource("1_0602f")
-wheelie_force = 500.0
-
-[node name="Model" type="Node3D" parent="." unique_id=587915281]
-
-[node name="Sketchfab_Scene" parent="Model" unique_id=867107368 instance=ExtResource("1_scooter")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=366144138]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.003)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5377784, 0.003)
 shape = SubResource("BoxShape3D_moto")
 
 [node name="CameraRig" type="Node3D" parent="." unique_id=342599493]
@@ -36,11 +31,14 @@ current = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 
 [node name="RodaTraseira" type="VehicleWheel3D" parent="." unique_id=1367499826]
-transform = Transform3D(-0.99999994, 0, 8.742278e-08, 0, 1, 0, -8.742277e-08, 0, -1, 0, 0.3, 0.812)
+transform = Transform3D(-0.8, 0, 1.2079664e-07, 0, 0.8, 0, -1.2079664e-07, 0, -0.8, 0, 0.431, 0.831)
 engine_force = 103.14
 brake = 28.83
 use_as_traction = true
 
 [node name="RodaFrontal" type="VehicleWheel3D" parent="." unique_id=1301198062]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.3, -0.902)
+transform = Transform3D(-0.8, 0, -1.2079664e-07, 0, 0.8, 0, 1.2079664e-07, 0, -0.8, 0, 0.43111175, -1.0388877)
 use_as_steering = true
+
+[node name="motountitled1" parent="." unique_id=553754760 instance=ExtResource("2_0602f")]
+transform = Transform3D(-0.2, 0, -1.7484556e-08, 0, 0.2, 0, 1.7484556e-08, 0, -0.2, 0, 0.03733301, 0)
