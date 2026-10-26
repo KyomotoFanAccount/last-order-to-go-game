@@ -1,8 +1,8 @@
-[gd_scene format=3 uid="uid://cqrcij5ergith"]
+[gd_scene format=3 uid="uid://b3ghh3uejtp1h"]
 
-[ext_resource type="PackedScene" uid="uid://b7exsghe1x22u" path="res://assets/vehicles/motountitled1.fbx" id="1_7ykdc"]
+[ext_resource type="PackedScene" uid="uid://b7exsghe1x22u" path="res://assets/vehicles/motountitled1.fbx" id="1_c1afe"]
 
-[node name="motountitled1" unique_id=553754760 instance=ExtResource("1_7ykdc")]
+[node name="motountitled1" unique_id=553754760 instance=ExtResource("1_c1afe")]
 
 [node name="Skeleton3D" parent="Armature" parent_id_path=PackedInt32Array(1529903123) index="0" unique_id=1832252666]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2162512e-17, -0.11170578, -0.051992178)

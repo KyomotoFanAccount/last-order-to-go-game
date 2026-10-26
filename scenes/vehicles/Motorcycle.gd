@@ -949,6 +949,8 @@ func _score_on_landed() -> void:
 
 # Chamado uma vez no instante em que a moto toca o chão depois de ficar no ar
 func _on_landed() -> void:
+	_damage_delivery_integrity_on_landing()
+
 	var horizontal = Vector3(linear_velocity.x, 0.0, linear_velocity.z)
 	var speed = horizontal.length()
 	if speed < landing_slide_min_speed:
@@ -959,6 +961,40 @@ func _on_landed() -> void:
 	if sideways >= landing_slide_min_sideways:
 		_landing_slide_time = landing_slide_duration
 
+# Dano à comida: avalia apenas a inclinação no instante do pouso.
+# A velocidade foi intencionalmente retirada como requisito para não bloquear
+# pousos tortos que acontecem em baixa velocidade.
+func _damage_delivery_integrity_on_landing() -> void:
+	if not DeliveryManager.is_carrying():
+		return
+
+	var bike_up := global_transform.basis.y.normalized()
+	var upright_dot := clampf(bike_up.dot(Vector3.UP), -1.0, 1.0)
+	var angle := rad_to_deg(acos(upright_dot))
+
+	print("Pouso detectado: ângulo %.1f graus" % angle)
+
+	# Pousos quase retos não causam dano.
+	if angle <= 25.0:
+		return
+
+	var damage: float
+
+	if angle < 45.0:
+		# Inclinação leve: dano pequeno.
+		var amount := (angle - 25.0) / 20.0
+		damage = lerpf(1.0, 5.0, clampf(amount, 0.0, 1.0))
+	elif angle < 75.0:
+		# Inclinação intermediária: dano moderado.
+		var amount := (angle - 45.0) / 30.0
+		damage = lerpf(5.0, 15.0, clampf(amount, 0.0, 1.0))
+	else:
+		# Pouso muito torto ou de cabeça para baixo: dano alto.
+		var amount := (angle - 75.0) / 105.0
+		damage = lerpf(15.0, 25.0, clampf(amount, 0.0, 1.0))
+
+	print("Dano de integridade aplicado: %.1f%%" % damage)
+	DeliveryManager.damage_integrity(damage, "Pouso torto")
 # Controla a fricção das rodas (drift + derrapagem do pouso) e o grip lateral
 func _update_wheel_friction(delta: float) -> void:
 	_landing_slide_time = maxf(_landing_slide_time - delta, 0.0)

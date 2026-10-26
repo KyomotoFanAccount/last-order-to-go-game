@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cydaitycu724t" path="res://scenes/vehicles/Motorcycle.gd" id="1_0602f"]
 [ext_resource type="PackedScene" uid="uid://b7exsghe1x22u" path="res://assets/vehicles/motountitled1.fbx" id="2_0602f"]
+[ext_resource type="Script" uid="uid://7mglr0vrl7vi" path="res://delivery/deliveru_integrity_damage.gd" id="3_ceuqe"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_moto"]
 size = Vector3(0.8, 1, 2.7062988)
@@ -42,3 +43,6 @@ use_as_steering = true
 
 [node name="motountitled1" parent="." unique_id=553754760 instance=ExtResource("2_0602f")]
 transform = Transform3D(-0.2, 0, -1.7484556e-08, 0, 0.2, 0, 1.7484556e-08, 0, -0.2, 0, 0.03733301, 0)
+
+[node name="IntegrityDamage" type="Node3D" parent="." unique_id=232462138]
+script = ExtResource("3_ceuqe")
