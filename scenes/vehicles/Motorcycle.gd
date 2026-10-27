@@ -949,7 +949,6 @@ func _score_on_landed() -> void:
 
 # Chamado uma vez no instante em que a moto toca o chão depois de ficar no ar
 func _on_landed() -> void:
-	_damage_delivery_integrity_on_landing()
 
 	var horizontal = Vector3(linear_velocity.x, 0.0, linear_velocity.z)
 	var speed = horizontal.length()
