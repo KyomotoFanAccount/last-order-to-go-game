@@ -12,6 +12,7 @@ extends VehicleBody3D
 #   Shift (segurando) + A/D em velocidade = drift (solte para ganhar turbo)
 #   No ar: W/S = inclinar o nariz | Q/E = rolar de lado | A/D = girar no próprio eixo (estilo GTA)
 #   Pouso de lado = a moto derrapa um pouco antes de recuperar a aderência
+#   Pouso muito torto = a moto não se endireita sozinha: ela tomba (R levanta, ou sozinha depois de um tempo)
 #   ↑ / ↓ = aumenta / diminui a velocidade máxima (teste)
 # As teclas de pular e de stoppie podem ser trocadas no Inspetor.
 # Pontuação: manobras (tempo no ar, giros, empinar, stoppie, drift, grind) formam um combo com
@@ -100,6 +101,12 @@ extends VehicleBody3D
 @export var drift_turn_boost: float = 2.4     # curva mais fechada durante o drift
 @export var drift_grip_mult: float = 0.05     # grip lateral durante o drift (menor = escorrega mais)
 @export var drift_rear_friction: float = 0.2  # fricção da roda traseira durante o drift
+@export var drift_front_friction: float = 0.4 # fricção da roda da frente no drift (menor = a frente escorrega mais)
+@export var drift_redirect_rate: float = 1.6  # quão rápido o movimento acompanha a frente da moto (maior = drift mais "preso")
+@export var drift_speed_loss: float = 0.12    # fração da velocidade perdida por segundo no drift (0 = não perde nada)
+@export var drift_max_slip_deg: float = 45.0  # ângulo de atravessada considerado máximo
+@export var drift_max_yaw_rate: float = 2.4   # rad/s: giro máximo no drift (evita rodopiar em baixa velocidade)
+@export var drift_exit_time: float = 0.6      # s para a aderência voltar ao normal depois do drift
 @export var drift_hop_velocity: float = 1.2   # pulinho ao entrar no drift (0 = sem pulo)
 @export var drift_turbo_enabled: bool = false # true = ganha turbo ao soltar o drift
 @export var drift_level1_time: float = 0.8    # segundos de drift para o turbo azul
@@ -130,6 +137,8 @@ extends VehicleBody3D
 @export var air_brake: float = 1.5            # rad/s²: quanto a rotação freia sozinha sem input (0 = gira para sempre)
 @export var ground_level_speed: float = 8.0   # quão rápido a moto se endireita ao pousar
 @export var ground_level_max: float = 6.0     # rad/s: limite dessa correção
+@export var assist_full_angle_deg: float = 20.0  # até este ângulo de lado a moto se endireita com força total
+@export var assist_zero_angle_deg: float = 55.0  # a partir deste ângulo a moto não se endireita mais (tomba de verdade)
 
 @export_group("Pouso (derrapagem)")
 @export var landing_slide_duration: float = 1.0       # s para a aderência voltar ao normal depois do pouso de lado
@@ -202,6 +211,7 @@ var _model_base_transform: Transform3D = Transform3D.IDENTITY
 var _drifting: bool = false
 var _drift_dir: float = 0.0
 var _drift_charge: float = 0.0
+var _drift_grip_blend: float = 1.0   # 1 = aderência normal, 0 = aderência de drift
 var _boost_time_left: float = 0.0
 var _rear_friction_base: float = 10.5
 var _front_friction_base: float = 10.5
@@ -945,11 +955,11 @@ func _score_on_landed() -> void:
 # ------------------------------------------------------------------
 # Derrapagem no pouso: se a moto pousa de lado, ela desliza um pouco e
 # a aderência volta aos poucos (em vez de parar de uma vez).
+# (O dano à comida no pouso fica no nó IntegrityDamage, filho da moto.)
 # ------------------------------------------------------------------
 
 # Chamado uma vez no instante em que a moto toca o chão depois de ficar no ar
 func _on_landed() -> void:
-
 	var horizontal = Vector3(linear_velocity.x, 0.0, linear_velocity.z)
 	var speed = horizontal.length()
 	if speed < landing_slide_min_speed:
@@ -960,40 +970,6 @@ func _on_landed() -> void:
 	if sideways >= landing_slide_min_sideways:
 		_landing_slide_time = landing_slide_duration
 
-# Dano à comida: avalia apenas a inclinação no instante do pouso.
-# A velocidade foi intencionalmente retirada como requisito para não bloquear
-# pousos tortos que acontecem em baixa velocidade.
-func _damage_delivery_integrity_on_landing() -> void:
-	if not DeliveryManager.is_carrying():
-		return
-
-	var bike_up := global_transform.basis.y.normalized()
-	var upright_dot := clampf(bike_up.dot(Vector3.UP), -1.0, 1.0)
-	var angle := rad_to_deg(acos(upright_dot))
-
-	print("Pouso detectado: ângulo %.1f graus" % angle)
-
-	# Pousos quase retos não causam dano.
-	if angle <= 25.0:
-		return
-
-	var damage: float
-
-	if angle < 45.0:
-		# Inclinação leve: dano pequeno.
-		var amount := (angle - 25.0) / 20.0
-		damage = lerpf(1.0, 5.0, clampf(amount, 0.0, 1.0))
-	elif angle < 75.0:
-		# Inclinação intermediária: dano moderado.
-		var amount := (angle - 45.0) / 30.0
-		damage = lerpf(5.0, 15.0, clampf(amount, 0.0, 1.0))
-	else:
-		# Pouso muito torto ou de cabeça para baixo: dano alto.
-		var amount := (angle - 75.0) / 105.0
-		damage = lerpf(15.0, 25.0, clampf(amount, 0.0, 1.0))
-
-	print("Dano de integridade aplicado: %.1f%%" % damage)
-	DeliveryManager.damage_integrity(damage, "Pouso torto")
 # Controla a fricção das rodas (drift + derrapagem do pouso) e o grip lateral
 func _update_wheel_friction(delta: float) -> void:
 	_landing_slide_time = maxf(_landing_slide_time - delta, 0.0)
@@ -1001,13 +977,18 @@ func _update_wheel_friction(delta: float) -> void:
 	_landing_grip_factor = lerpf(1.0, landing_slide_grip_mult, slide_t)
 	var friction_factor = lerpf(1.0, landing_slide_friction_mult, slide_t)
 
+	# Aderência do drift: cai rápido ao entrar e volta aos poucos ao sair
+	var blend_target = 1.0
+	if _drifting:
+		blend_target = 0.0
+	_drift_grip_blend = move_toward(_drift_grip_blend, blend_target, delta / maxf(drift_exit_time, 0.05))
+
 	if rear_wheel:
-		var rear = _rear_friction_base
-		if _drifting:
-			rear *= drift_rear_friction
+		var rear = _rear_friction_base * lerpf(drift_rear_friction, 1.0, _drift_grip_blend)
 		rear_wheel.wheel_friction_slip = rear * friction_factor
 	if front_wheel:
-		front_wheel.wheel_friction_slip = _front_friction_base * friction_factor
+		var front = _front_friction_base * lerpf(drift_front_friction, 1.0, _drift_grip_blend)
+		front_wheel.wheel_friction_slip = front * friction_factor
 
 # ------------------------------------------------------------------
 # Colisão suave (estilo Burnout / GTA): você nunca perde o controle.
@@ -1183,16 +1164,20 @@ func _process_vehicle_inputs(delta: float) -> void:
 	if rear_contact:
 		var up = global_transform.basis.y
 		var target_yaw = forward_speed * tan(steering) / _wheelbase
+		if _drifting:
+			target_yaw = clampf(target_yaw, -drift_max_yaw_rate, drift_max_yaw_rate)
 		var current_yaw = angular_velocity.dot(up)
 		var new_yaw = move_toward(current_yaw, target_yaw, yaw_response * delta)
 		angular_velocity += up * (new_yaw - current_yaw)
 
-		# Grip lateral: evita escorregar de lado (menor durante o drift e logo após pouso de lado)
-		var grip = lateral_grip * _landing_grip_factor
-		if _drifting:
-			grip *= drift_grip_mult
+		# Grip lateral: baixo no drift e logo após pouso de lado; volta aos poucos depois do drift
+		var grip = lateral_grip * _landing_grip_factor * lerpf(drift_grip_mult, 1.0, _drift_grip_blend)
 		var lateral_speed = global_transform.basis.x.dot(linear_velocity)
 		apply_central_force(-global_transform.basis.x * lateral_speed * mass * grip)
+
+		# Inércia do drift
+		if _drifting or _drift_grip_blend < 1.0:
+			_apply_drift_momentum(delta)
 
 	# --- Empinar (Espaço) ---
 	# Com W: empina sempre (até parado).
@@ -1247,7 +1232,12 @@ func _update_air_state(delta: float) -> void:
 	var front_contact = front_wheel != null and front_wheel.is_in_contact()
 	var rear_contact = rear_wheel != null and rear_wheel.is_in_contact()
 	_grounded = front_contact or rear_contact
-	if _grounded:
+
+	# Moto caída: sem roda no chão, mas o corpo dela está encostado e ela está deitada.
+	# Conta como "no chão" (senão ela ganharia pontos de tempo no ar e o controle do ar ficaria ligado).
+	var lying = not _grounded and global_transform.basis.y.y < 0.5 and get_colliding_bodies().size() > 0
+
+	if _grounded or lying:
 		_air_time = 0.0
 	else:
 		_air_time += delta
@@ -1258,7 +1248,7 @@ func _update_air_state(delta: float) -> void:
 		_score_on_takeoff()
 
 	# Acabou de pousar
-	if was_in_air and not _in_air and _grounded:
+	if was_in_air and not _in_air and (_grounded or lying):
 		_score_on_landed()
 		_on_landed()
 
@@ -1296,7 +1286,8 @@ func _apply_air_rate(axis: Vector3, target: float, has_input: bool, delta: float
 	var rate = air_accel if has_input else air_brake
 	angular_velocity += axis * (move_toward(current, target, rate * delta) - current)
 
-# No chão: trava a rolagem e endireita a moto (importante ao pousar torta).
+# No chão: segura a rolagem e endireita a moto, mas só quando ela está pouco inclinada.
+# Em inclinações grandes a ajuda some e a moto tomba de verdade (nada de endireitar por mágica).
 # No ar: deixa a rolagem livre.
 func _stabilize_roll() -> void:
 	if _in_air:
@@ -1305,15 +1296,23 @@ func _stabilize_roll() -> void:
 	var fwd = -global_transform.basis.z
 	var up = global_transform.basis.y
 
-	# Zera só a rolagem (eixo local Z) sem mexer na transform do corpo físico
-	angular_velocity -= fwd * angular_velocity.dot(fwd)
+	# Inclinação de lado em relação ao "para cima" do mundo
+	var target_up = Vector3.UP - fwd * Vector3.UP.dot(fwd)
+	if target_up.length() < 0.2:
+		return   # nariz muito para cima/baixo: sem referência de lado
+	target_up = target_up.normalized()
+	var roll_error = up.signed_angle_to(target_up, fwd)
+	var roll_deg = absf(rad_to_deg(roll_error))
 
-	# Se está de ponta-cabeça, não corrige (isso vira "queda" depois)
-	if up.dot(Vector3.UP) > 0.3:
-		var target_up = Vector3.UP - fwd * Vector3.UP.dot(fwd)
-		if target_up.length() > 0.2:
-			var angle = up.signed_angle_to(target_up.normalized(), fwd)
-			angular_velocity += fwd * clampf(angle * ground_level_speed, -ground_level_max, ground_level_max)
+	# Ajuda: total em inclinações pequenas, some em inclinações grandes
+	var assist = 1.0
+	if roll_deg > assist_full_angle_deg:
+		assist = 1.0 - clampf((roll_deg - assist_full_angle_deg) / maxf(assist_zero_angle_deg - assist_full_angle_deg, 1.0), 0.0, 1.0)
+	if assist <= 0.0:
+		return   # muito torta: sem ajuda, a moto tomba de verdade
+
+	angular_velocity -= fwd * angular_velocity.dot(fwd) * assist
+	angular_velocity += fwd * clampf(roll_error * ground_level_speed, -ground_level_max, ground_level_max) * assist
 
 # ------------------------------------------------------------------
 # Drift estilo Mario Kart
@@ -1330,7 +1329,10 @@ func _update_drift(delta: float, turn_input: float, forward_speed: float, ground
 		if shift_pressed and grounded and forward_speed > drift_min_speed and turn_input != 0.0:
 			_start_drift(turn_input)
 	else:
-		if not shift_pressed or forward_speed < drift_min_speed * 0.6:
+		# Usa a velocidade real (não só a "para frente"): numa derrapada de lado, a velocidade
+		# para frente é só uma parte da real e o drift acabava cedo demais
+		var horizontal_speed = Vector2(linear_velocity.x, linear_velocity.z).length()
+		if not shift_pressed or horizontal_speed < drift_min_speed * 0.6:
 			_end_drift(true)
 
 	if not _drifting:
@@ -1353,7 +1355,7 @@ func _start_drift(direction: float) -> void:
 	if drift_hop_velocity > 0.0:
 		apply_central_impulse(global_transform.basis.y * mass * drift_hop_velocity)
 
-	# (A fricção da roda traseira é ajustada em _update_wheel_friction)
+	# (A fricção das rodas é ajustada em _update_wheel_friction)
 
 func _end_drift(give_boost: bool) -> void:
 	if _drifting and give_boost and drift_turbo_enabled:
@@ -1377,6 +1379,38 @@ func _drift_level() -> int:
 	if _drift_charge >= drift_level1_time:
 		return 1
 	return 0
+
+# Drift com inércia: a moto mantém a velocidade e a direção do movimento vai
+# acompanhando a frente da moto aos poucos (em vez de a derrapada roubar a velocidade).
+func _apply_drift_momentum(delta: float) -> void:
+	var horizontal = Vector3(linear_velocity.x, 0.0, linear_velocity.z)
+	var speed = horizontal.length()
+	if speed < 1.0:
+		return
+
+	var forward = -global_transform.basis.z
+	forward.y = 0.0
+	if forward.length() < 0.1:
+		return
+	forward = forward.normalized()
+	var direction = horizontal / speed
+
+	# Quão atravessada a moto está em relação ao movimento (0 = reta, 1 = no ângulo máximo)
+	var slip = clampf(direction.angle_to(forward) / deg_to_rad(maxf(drift_max_slip_deg, 1.0)), 0.0, 1.5)
+
+	# A direção do movimento acompanha a frente da moto (mais forte quanto mais atravessada)
+	var weight = clampf(drift_redirect_rate * (0.5 + slip * slip) * delta, 0.0, 1.0)
+	var new_direction = direction.lerp(forward, weight)
+	if new_direction.length() < 0.1:
+		new_direction = forward
+	new_direction = new_direction.normalized()
+
+	# Perde só um pouquinho de velocidade por segundo
+	var new_speed = speed
+	if _drifting:
+		new_speed = speed * (1.0 - clampf(drift_speed_loss * delta, 0.0, 1.0))
+
+	linear_velocity = Vector3(new_direction.x * new_speed, linear_velocity.y, new_direction.z * new_speed)
 
 # Trava a velocidade horizontal na máxima atual (a queda vertical não é afetada)
 func _limit_speed() -> void:
