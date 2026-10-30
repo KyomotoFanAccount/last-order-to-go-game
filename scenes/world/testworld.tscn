@@ -1,13 +1,10 @@
 [gd_scene format=3 uid="uid://7a4lrpm1l035"]
 
 [ext_resource type="Texture2D" uid="uid://wmu3d5im02bb" path="res://textura/Light/texture_06.png" id="1_k66ko"]
-[ext_resource type="PackedScene" uid="uid://c5vj1qhqsukfm" path="res://scenes/vehicles-terceiro/Motorcycle.tscn" id="2_l05mh"]
-[ext_resource type="PackedScene" uid="uid://ceeuayk58c3my" path="res://assets/vehicles/low-poly_scooter.glb" id="2_u1678"]
-[ext_resource type="PackedScene" uid="uid://dyqrsp6vc5lwh" path="res://scenes/vehicles-backup/Motorcycle.tscn" id="5_axoqh"]
 [ext_resource type="Script" uid="uid://cu1ulfq3ad00m" path="res://scenes/world/csg_box_3d_3.gd" id="7_ici0x"]
 [ext_resource type="PackedScene" uid="uid://dgawalvy642em" path="res://scenes/player/Player.tscn" id="7_iivpr"]
 [ext_resource type="PackedScene" uid="uid://blc0cfgtyf6au" path="res://scenes/vehicles/Motorcycle.tscn" id="8_ici0x"]
-[ext_resource type="PackedScene" uid="uid://cqrcij5ergith" path="res://scenes/moto_nova/moto_nova.tscn" id="8_va6hb"]
+[ext_resource type="Script" uid="uid://cltjfa161gped" path="res://delivery/delivery_point.gd" id="9_va6hb"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_xrivr"]
 size = Vector3(116.628815, 1, 118.00148)
@@ -33,36 +30,18 @@ surface_material_override/0 = SubResource("StandardMaterial3D_axoqh")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -306.0206, -0.5, -1137.3872)
 shape = SubResource("BoxShape3D_13qdw")
 
-[node name="Motorcycle" parent="Ground" unique_id=1462046149 instance=ExtResource("2_l05mh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.522377, 0.080843635, 34.738033)
-
-[node name="moto" type="CharacterBody3D" parent="." unique_id=514060961]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.393175, 0, 0)
-
-[node name="Sketchfab_Scene" parent="moto" unique_id=46398332 instance=ExtResource("2_u1678")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.676638, 0.08084554, -6.503186)
-
-[node name="Motorcycle3" parent="." unique_id=693609182 instance=ExtResource("5_axoqh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37.249332, 0.08084554, 8.970184)
-
 [node name="Player" parent="." unique_id=19288516 instance=ExtResource("7_iivpr")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.991598, 0, 9.835286)
 
 [node name="Motorcycle" parent="." unique_id=983805966 instance=ExtResource("8_ici0x")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.802741, 0.08084459, 14.998564)
 
-[node name="Motorcycle2" parent="." unique_id=1349306608 instance=ExtResource("5_axoqh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.639997, 0.08084459, 18.40725)
-
-[node name="Motorcycle4" parent="." unique_id=1500474628 instance=ExtResource("8_ici0x")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.947016, 0.08084411, 9.046508)
-
 [node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=22344603]
-transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 2.3821688, 0)
+transform = Transform3D(3.8479624, 0, -4.6036053, 0, 6, 0, 4.6036053, 0, 3.8479624, -11.978378, 2.3821688, -19.002045)
 use_collision = true
 
 [node name="CSGBox3D2" type="CSGBox3D" parent="." unique_id=341949672]
-transform = Transform3D(23.18222, 6.211657, 0, -6.211657, 23.18222, 0, 0, 0, 24, 11.3698845, -9.286296, -0.06140709)
+transform = Transform3D(14.777463, 3.9596093, -18.491837, -6.2116566, 23.182219, 0, 17.861742, 4.7860394, 15.298756, 1.1269531, -9.1472845, -15.401951)
 use_collision = true
 
 [node name="CSGBox3D4" type="CSGBox3D" parent="." unique_id=8488354]
@@ -75,8 +54,29 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.920166, 0.5, 22.770538)
 size = Vector3(13.688, 1, 0.501)
 script = ExtResource("7_ici0x")
 
-[node name="moto_nova" parent="." unique_id=553754760 instance=ExtResource("8_va6hb")]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 18.809723, -0.07205129, 28.521358)
+[node name="Restaurante_Napoli" type="CSGBox3D" parent="." unique_id=905901616]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 3, -40)
+size = Vector3(8, 6, 8)
+script = ExtResource("9_va6hb")
+kind = 0
 
-[node name="Motorcycle5" parent="." unique_id=581364650 instance=ExtResource("8_ici0x")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.449938, 1.383354, 19.630068)
+[node name="Restaurante_BurgerZ" type="CSGBox3D" parent="." unique_id=1715518999]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 3, -40)
+size = Vector3(8, 6, 8)
+script = ExtResource("9_va6hb")
+kind = 0
+
+[node name="Casa_da_Ana" type="CSGBox3D" parent="." unique_id=1746030955]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 2.5, 40)
+size = Vector3(6, 5, 6)
+script = ExtResource("9_va6hb")
+
+[node name="Casa_da_Bruno" type="CSGBox3D" parent="." unique_id=1576041203]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 45)
+size = Vector3(6, 5, 6)
+script = ExtResource("9_va6hb")
+
+[node name="Casa_da_Carla" type="CSGBox3D" parent="." unique_id=699620618]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 2.5, 40)
+size = Vector3(6, 5, 6)
+script = ExtResource("9_va6hb")
